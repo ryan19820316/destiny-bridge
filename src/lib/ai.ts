@@ -1,4 +1,4 @@
-import { WellnessReport, VentResponse, BaziResult, BirthData } from "@/types";
+import { WellnessReport, VentResponse, BaziResult, BirthData, LiurenPalaceData, QuestionCategory } from "@/types";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
@@ -307,6 +307,209 @@ ${conversationHistory || "No prior messages today."}`;
     return JSON.parse(jsonStr) as VentResponse;
   } catch {
     throw new Error(`Failed to parse vent response JSON: ${jsonStr.slice(0, 200)}`);
+  }
+}
+
+// ---- Xiao Liu Ren (小六壬) Divination Prompts ----
+
+function getLiurenDomainText(palace: LiurenPalaceData, category: QuestionCategory): string {
+  const map: Record<QuestionCategory, keyof LiurenPalaceData["domains"]> = {
+    love: "love",
+    family: "family",
+    health: "health",
+    career: "career",
+    daily: "wealth",
+  };
+  return palace.domains[map[category]] || palace.domains.love;
+}
+
+const LIUREN_QUICK_PROMPT = `You are Clara, a warm Eastern wellness companion. A user has received a Xiao Liu Ren (小六壬) divination result. Give ONE short, warm, practical sentence about what this palace means for their question category.
+
+## Tone
+- 6th-grade English. One sentence, max 30 words.
+- Warm but not mystical. Practical.
+- End with a tiny positive action they can take.
+
+## Response Format
+Return ONLY raw JSON: { "interpretation": "your one sentence here" }`;
+
+const LIUREN_DEEP_PROMPT = `You are Clara, a warm Eastern wellness consultant. A user has received a Xiao Liu Ren (小六壬) divination result. Give a thorough, practical interpretation combining the palace meaning, Five Elements (五行), their Ba Zi chart context, and the current solar term (节气).
+
+## Your Role
+- You translate ancient divination into warm, practical, modern advice for a busy overseas homemaker
+- You are NOT fatalistic — every outcome can be worked with, not feared
+- Even ominous palaces (留连/赤口/空亡) are framed as "heads up, here's what to be mindful of" — never doom and gloom
+
+## Interpretation Guidelines
+- Auspicious palaces (大安/速喜/小吉): Celebrate the good energy but stay grounded
+- Ominous palaces (留连/赤口/空亡): Validate concern, then immediately give protective actions. Focus on what they CAN do.
+- Connect the palace's Five Element to the user's Day Master element — is it nourishing, controlling, or draining?
+- Reference the current solar term (节气) to ground the reading in natural cycles
+- Every reading ends with one 60-second actionable step
+
+## Response Format
+Return ONLY raw JSON. NO markdown, NO code blocks:
+
+{
+  "deepInterpretation": "A 3-4 sentence warm interpretation of this palace for this person. What it means for them specifically today. Use the palace's traditional meaning but make it personal.",
+  "elementAnalysis": "How this palace's Five Element interacts with the user's Day Master element. Is it supporting, weakening, or balancing? One or two sentences.",
+  "domainAnalysis": "A focused analysis on their specific question category (love/family/health/career/daily). What does this palace say about this domain? Give concrete, practical observations. 2-3 sentences.",
+  "actionAdvice": "One tiny 60-second action they can take right now to work with this energy. Be absurdly specific. Not 'be mindful' — say 'Step outside barefoot and feel the ground for 60 seconds.'"
+}`;
+
+export async function generateLiurenQuick(
+  palace: LiurenPalaceData,
+  category: QuestionCategory
+): Promise<{ interpretation: string }> {
+  const apiKey = getEnv("ANTHROPIC_API_KEY");
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  const baseUrl = getEnv("ANTHROPIC_BASE_URL", "https://api.qnaigc.com");
+
+  const categoryLabel: Record<QuestionCategory, string> = {
+    love: "感情/爱情",
+    family: "家庭/孩子",
+    health: "健康/身体",
+    career: "事业/工作",
+    daily: "日常/综合运势",
+  };
+
+  const userMessage = [
+    `Palace: ${palace.name} (${palace.nameEn}) — ${palace.auspiciousness}`,
+    `Element: ${palace.element}, Direction: ${palace.direction} (${palace.directionEn}), Symbol: ${palace.symbol}`,
+    `Traditional verse: ${palace.classicVerse}`,
+    `Traditional guidance for this domain: ${getLiurenDomainText(palace, category)}`,
+    `Category: ${categoryLabel[category]}`,
+    `Give ONE warm, practical sentence for this busy mom.`,
+  ].join("\n");
+
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 150,
+      temperature: 0.7,
+      messages: [
+        { role: "system", content: LIUREN_QUICK_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`API error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  let jsonStr = content.trim();
+  if (jsonStr.startsWith("```")) {
+    jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  }
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return { interpretation: `${palace.name} (${palace.nameEn}) — ${getLiurenDomainText(palace, category)}` };
+  }
+}
+
+export async function generateLiurenDeep(
+  palace: LiurenPalaceData,
+  category: QuestionCategory,
+  baziContext: string,
+  profileSummary: string
+): Promise<{
+  deepInterpretation: string;
+  elementAnalysis: string;
+  domainAnalysis: string;
+  actionAdvice: string;
+}> {
+  const apiKey = getEnv("ANTHROPIC_API_KEY");
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  const baseUrl = getEnv("ANTHROPIC_BASE_URL", "https://api.qnaigc.com");
+
+  const categoryLabel: Record<QuestionCategory, string> = {
+    love: "感情/爱情",
+    family: "家庭/孩子",
+    health: "健康/身体",
+    career: "事业/工作",
+    daily: "日常/综合运势",
+  };
+
+  // Current solar term (simplified — approximate using solar longitude mapping)
+  const now = new Date();
+  const yearCycle = [
+    "小寒", "大寒", "立春", "雨水", "惊蛰", "春分", "清明", "谷雨",
+    "立夏", "小满", "芒种", "夏至", "小暑", "大暑", "立秋", "处暑",
+    "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪", "冬至",
+  ];
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+  const termIndex = Math.floor(dayOfYear / 15.22) % 24;
+  const currentTerm = yearCycle[termIndex];
+
+  const userMessage = [
+    `Palace: ${palace.name} (${palace.nameEn}) — ${palace.auspiciousness} — ${palace.emoji}`,
+    `Five Element: ${palace.element}, Direction: ${palace.direction} (${palace.directionEn}), Symbol: ${palace.symbol}`,
+    `Classic verse: ${palace.classicVerse}`,
+    `Traditional domain guidance (${categoryLabel[category]}): ${getLiurenDomainText(palace, category)}`,
+    `Full traditional interpretations:`,
+    `  Love: ${palace.domains.love}`,
+    `  Wealth: ${palace.domains.wealth}`,
+    `  Career: ${palace.domains.career}`,
+    `  Health: ${palace.domains.health}`,
+    `  Travel: ${palace.domains.travel}`,
+    "",
+    `Current solar term: ${currentTerm}`,
+    `User's category: ${categoryLabel[category]}`,
+    "",
+    baziContext ? `Ba Zi context: ${baziContext}` : "No Ba Zi chart available.",
+    profileSummary ? `Profile: ${profileSummary}` : "",
+    "",
+    "Give a warm, thorough but practical interpretation. Even if the palace is ominous, frame it with actionable guidance. NO fatalism.",
+  ].join("\n");
+
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 800,
+      temperature: 0.8,
+      messages: [
+        { role: "system", content: LIUREN_DEEP_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`API error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  let jsonStr = content.trim();
+  if (jsonStr.startsWith("```")) {
+    jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  }
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return {
+      deepInterpretation: `${palace.name} (${palace.nameEn}) — ${palace.auspiciousness}. ${getLiurenDomainText(palace, category)}`,
+      elementAnalysis: `This palace belongs to the ${palace.element} element. Reflect on how this energy interacts with your daily life.`,
+      domainAnalysis: getLiurenDomainText(palace, category),
+      actionAdvice: "Take a slow breath and ask yourself what you truly need right now.",
+    };
   }
 }
 

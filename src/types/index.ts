@@ -98,6 +98,9 @@ export interface UserProfile {
   trialStartDate: string | null;
   lastChatClearDate: string;
   conversationHistory: VentMessage[];
+  liurenDailyCount: number;
+  lastLiurenDate: string;
+  liurenHistory: LiurenQueryRecord[];
 }
 
 export interface VentMessage {
@@ -123,6 +126,73 @@ export interface ShopProduct {
   affiliateUrl: string;
   imageEmoji: string;
   element: Element;
+}
+
+// ---- Xiao Liu Ren (小六壬) Divination ----
+export type LiurenPalace = "大安" | "留连" | "速喜" | "赤口" | "小吉" | "空亡";
+export type QuestionCategory = "love" | "family" | "health" | "career" | "daily";
+export type LiurenLevel = "quick" | "deep";
+
+export interface LiurenPalaceData {
+  index: number;
+  name: LiurenPalace;
+  nameEn: string;
+  auspiciousness: "大吉" | "中吉" | "小吉" | "小凶" | "中凶" | "大凶";
+  element: Element;
+  direction: string;
+  directionEn: string;
+  symbol: string;
+  color: string;
+  emoji: string;
+  classicVerse: string;
+  domains: {
+    love: string;
+    family: string;
+    wealth: string;
+    career: string;
+    health: string;
+    travel: string;
+    lostItems: string;
+  };
+}
+
+export interface LiurenDivination {
+  palaceIndex: number;
+  palace: LiurenPalaceData;
+  lunarMonth: number;
+  lunarDay: number;
+  lunarDateStr: string;
+  timeZhi: string;
+  hourIndex: number;
+}
+
+export interface LiurenQuickResult {
+  palace: LiurenPalaceData;
+  lunarDateStr: string;
+  timeZhi: string;
+  category: QuestionCategory;
+  interpretation: string;
+  timestamp: string;
+}
+
+export interface LiurenDeepResult {
+  palace: LiurenPalaceData;
+  lunarDateStr: string;
+  timeZhi: string;
+  category: QuestionCategory;
+  deepInterpretation: string;
+  elementAnalysis: string;
+  domainAnalysis: string;
+  actionAdvice: string;
+  timestamp: string;
+}
+
+export interface LiurenQueryRecord {
+  category: QuestionCategory;
+  palaceIndex: number;
+  hourIndex: number;
+  date: string;
+  timestamp: string;
 }
 
 // ---- Legacy ----

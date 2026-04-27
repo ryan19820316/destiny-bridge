@@ -10,6 +10,7 @@ import DailyGuidanceCard from "@/components/DailyGuidanceCard";
 import VentChat from "@/components/VentChat";
 import PricingSection from "@/components/PricingSection";
 import ShopSection from "@/components/ShopSection";
+import XiaoLiuRen from "@/components/XiaoLiuRen";
 import Footer from "@/components/Footer";
 
 const ELEMENT_EMOJI: Record<string, string> = {
@@ -109,6 +110,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"daily" | "vent" | "liuren">("daily");
 
   const handleSubmit = async (data: BirthData) => {
     setLoading(true);
@@ -252,20 +254,44 @@ export default function Home() {
         </section>
       )}
 
-      {/* Module 2: Clara Membership (Daily + Vent) */}
+      {/* Module 2: Clara Membership (Daily + Vent + Divination) */}
       <section id="clara-membership" className="py-16 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl font-bold mb-3">
             Your Daily <span className="gold-text">Companion</span>
           </h2>
           <p className="text-gray-400 max-w-lg mx-auto text-sm">
-            Clara helps you start each day with balance — and she&apos;s always here when you need to vent.
+            Daily guidance, a listening ear, and ancient divination — Clara has your back.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <DailyGuidanceCard birthData={birthData} />
-          <VentChat />
+        {/* Tabs */}
+        <div className="flex justify-center gap-1 mb-6">
+          {([
+            { id: "daily", label: "Daily Guide", emoji: "📅" },
+            { id: "vent", label: "Vent to Clara", emoji: "🍵" },
+            { id: "liuren", label: "小六壬 Divination", emoji: "🔮" },
+          ] as const).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
+                  : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50"
+              }`}
+            >
+              <span className="mr-1.5">{tab.emoji}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div className="max-w-2xl mx-auto">
+          {activeTab === "daily" && <DailyGuidanceCard birthData={birthData} />}
+          {activeTab === "vent" && <VentChat />}
+          {activeTab === "liuren" && <XiaoLiuRen />}
         </div>
       </section>
 

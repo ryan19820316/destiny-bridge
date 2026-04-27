@@ -1,4 +1,4 @@
-import { UserProfile, VentMessage } from "@/types";
+import { UserProfile, VentMessage, LiurenQueryRecord, QuestionCategory } from "@/types";
 
 const PROFILE_KEY = "destinybridge_profile";
 
@@ -13,6 +13,9 @@ export const DEFAULT_PROFILE: UserProfile = {
   trialStartDate: null,
   lastChatClearDate: "",
   conversationHistory: [],
+  liurenDailyCount: 0,
+  lastLiurenDate: "",
+  liurenHistory: [],
 };
 
 export function getProfile(): UserProfile {
@@ -92,6 +95,62 @@ export function startFreeTrial(): void {
 
 export function activateMembership(): void {
   updateProfile({ membershipStatus: "active" });
+}
+
+export function getDailyLiurenCount(): number {
+  const profile = getProfile();
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.lastLiurenDate !== today) {
+    profile.liurenDailyCount = 0;
+    profile.lastLiurenDate = today;
+    profile.liurenHistory = [];
+    saveProfile(profile);
+    return 0;
+  }
+  return profile.liurenDailyCount;
+}
+
+export function incrementLiurenCount(): number {
+  const profile = getProfile();
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.lastLiurenDate !== today) {
+    profile.liurenDailyCount = 0;
+    profile.lastLiurenDate = today;
+    profile.liurenHistory = [];
+  }
+  profile.liurenDailyCount += 1;
+  saveProfile(profile);
+  return profile.liurenDailyCount;
+}
+
+export function canQueryLiuren(category: QuestionCategory, hourIndex: number): boolean {
+  const profile = getProfile();
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.lastLiurenDate !== today) return true;
+  return !profile.liurenHistory.some(
+    (r) => r.category === category && r.hourIndex === hourIndex && r.date === today
+  );
+}
+
+export function saveLiurenQuery(record: LiurenQueryRecord): void {
+  const profile = getProfile();
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.lastLiurenDate !== today) {
+    profile.liurenHistory = [];
+    profile.lastLiurenDate = today;
+  }
+  profile.liurenHistory.push(record);
+  if (profile.liurenHistory.length > 10) {
+    profile.liurenHistory = profile.liurenHistory.slice(-10);
+  }
+  saveProfile(profile);
+}
+
+export function getLiurenHistory(): LiurenQueryRecord[] {
+  const profile = getProfile();
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.lastLiurenDate !== today) return [];
+  return profile.liurenHistory.slice(-3).reverse();
 }
 
 export function buildProfileSummary(profile: UserProfile): string {
