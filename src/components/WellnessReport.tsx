@@ -4,7 +4,7 @@ import { BaziResult, BirthData } from "@/types";
 import type { WellnessReport as WellnessReportType } from "@/types";
 
 const ELEMENT_COLORS: Record<string, string> = {
-  木: "#6b7d4e", 火: "#c97b6b", 土: "#b08968", 金: "#c9a84c", 水: "#60a5fa",
+  木: "#4ade80", 火: "#f87171", 土: "#fbbf24", 金: "#f8ebc0", 水: "#60a5fa",
 };
 
 const ELEMENT_EMOJI: Record<string, string> = {
@@ -13,7 +13,7 @@ const ELEMENT_EMOJI: Record<string, string> = {
 
 function SectionTitle({ emoji, title }: { emoji: string; title: string }) {
   return (
-    <h4 className="flex items-center gap-2 text-base font-semibold text-gold-500 mb-3">
+    <h4 className="flex items-center gap-2 text-base font-semibold text-gold-200 mb-3">
       <span>{emoji}</span> {title}
     </h4>
   );
@@ -36,16 +36,16 @@ export default function WellnessReport({
   const maxCount = Math.max(...elementList.map((e) => elements[e]));
 
   return (
-    <div className="space-y-5 animate-fade-in text-indigo-900">
+    <div className="space-y-5 animate-fade-in">
       {/* Header */}
       <div className="text-center">
-        <p className="text-xs text-gold-500 uppercase tracking-widest mb-2">
+        <p className="text-xs text-gold-400 uppercase tracking-widest mb-2">
           Your Wellness Blueprint
         </p>
         <h2 className="text-2xl font-bold mb-1">
           Welcome, <span className="gold-text">Clara&apos;s friend</span>
         </h2>
-        <p className="text-earth-500 text-sm">
+        <p className="text-gray-400 text-sm">
           {birthData.year}-{String(birthData.month).padStart(2, "0")}-
           {String(birthData.day).padStart(2, "0")}
           {" · "}
@@ -54,34 +54,34 @@ export default function WellnessReport({
       </div>
 
       {/* Blueprint + Constitution */}
-      <div className="mystic-card rounded-3xl p-6">
-        <p className="text-indigo-800 leading-relaxed italic text-center">
+      <div className="mystic-card rounded-2xl p-6">
+        <p className="text-gray-200 leading-relaxed italic text-center">
           &ldquo;{wellness.blueprint}&rdquo;
         </p>
         <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
-          <span className="px-3 py-1.5 rounded-full bg-cream-200 text-gold-500 text-sm font-medium">
+          <span className="px-3 py-1.5 rounded-full bg-gold-400/15 text-gold-300 text-sm font-medium">
             {ELEMENT_EMOJI[dayMaster.element]} {dayMaster.element} Constitution
           </span>
-          <span className="px-3 py-1.5 rounded-full bg-indigo-800/5 text-indigo-800/70 text-sm">
+          <span className="px-3 py-1.5 rounded-full bg-mystic-700/80 text-gray-300 text-sm">
             {wellness.constitution}
           </span>
         </div>
-        <p className="text-indigo-800/60 text-sm text-center mt-3 leading-relaxed">
+        <p className="text-gray-400 text-sm text-center mt-3 leading-relaxed">
           {wellness.constitutionExplanation}
         </p>
       </div>
 
       {/* Five Elements Snapshot */}
-      <div className="mystic-card rounded-3xl p-5">
-        <h4 className="text-sm font-medium text-earth-500 mb-3 text-center">
+      <div className="mystic-card rounded-2xl p-5">
+        <h4 className="text-sm font-medium text-gray-400 mb-3 text-center">
           Your Elemental Balance
         </h4>
         <div className="space-y-2">
           {elementList.map((el) => (
             <div key={el} className="flex items-center gap-3">
               <span className="w-7 text-sm">{ELEMENT_EMOJI[el]}</span>
-              <span className="w-5 text-xs text-indigo-800/60">{el}</span>
-              <div className="flex-1 h-3 rounded-full bg-cream-200 overflow-hidden">
+              <span className="w-5 text-xs text-gray-500">{el}</span>
+              <div className="flex-1 h-3 rounded-full bg-mystic-800 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
@@ -90,141 +90,114 @@ export default function WellnessReport({
                   }}
                 />
               </div>
-              <span className="text-xs text-earth-500 w-3">{elements[el]}</span>
+              <span className="text-xs text-gray-400 w-3">{elements[el]}</span>
             </div>
           ))}
         </div>
         <div className="flex justify-center gap-4 mt-3 text-xs">
-          <span className="text-sage-500">
+          <span className="text-green-400">
             Nourish: {favorableElements.map((e) => ELEMENT_EMOJI[e] + e).join(", ")}
           </span>
-          <span className="text-indigo-800/30">·</span>
-          <span className="text-rose-500">
+          <span className="text-gray-500">·</span>
+          <span className="text-red-400">
             Go easy: {unfavorableElements.map((e) => ELEMENT_EMOJI[e] + e).join(", ")}
           </span>
         </div>
       </div>
 
       {/* 🍽️ Food */}
-      <div className="mystic-card rounded-3xl p-6">
+      <div className="mystic-card rounded-2xl p-6">
         <SectionTitle emoji="🍽️" title="Nourish · 食" />
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-earth-500 mb-1">
-              Favorable Ingredients
-            </p>
+            <p className="text-xs text-gray-500 mb-1">Favorable Ingredients</p>
             <div className="flex flex-wrap gap-1.5">
               {wellness.food.favorableIngredients.map((ing) => (
-                <span
-                  key={ing}
-                  className="px-2 py-1 rounded-xl bg-sage-300/20 text-sage-500 text-xs"
-                >
+                <span key={ing} className="px-2 py-1 rounded-lg bg-green-400/10 text-green-300 text-xs">
                   {ing}
                 </span>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-xs text-earth-500 mb-1">Better to Limit</p>
+            <p className="text-xs text-gray-500 mb-1">Better to Limit</p>
             <div className="flex flex-wrap gap-1.5">
               {wellness.food.avoidIngredients.map((ing) => (
-                <span
-                  key={ing}
-                  className="px-2 py-1 rounded-xl bg-rose-400/10 text-rose-500 text-xs"
-                >
+                <span key={ing} className="px-2 py-1 rounded-lg bg-red-400/10 text-red-300 text-xs">
                   {ing}
                 </span>
               ))}
             </div>
           </div>
         </div>
-        <div className="mt-4 p-3 rounded-2xl bg-cream-200/60">
-          <p className="text-xs text-gold-500 font-medium">
+        <div className="mt-4 p-3 rounded-xl bg-mystic-700/50">
+          <p className="text-xs text-gold-400 font-medium">
             🍲 {wellness.food.seasonalRecipe.name}
           </p>
-          <p className="text-xs text-indigo-800/60 mt-1">
-            {wellness.food.seasonalRecipe.why}
-          </p>
-          <p className="text-xs text-indigo-800/80 mt-1">
+          <p className="text-xs text-gray-400 mt-1">{wellness.food.seasonalRecipe.why}</p>
+          <p className="text-xs text-gray-300 mt-1">
             {wellness.food.seasonalRecipe.briefRecipe}
           </p>
         </div>
-        <p className="text-xs text-earth-500 mt-2">
-          {wellness.food.mealRhythm}
-        </p>
+        <p className="text-xs text-gray-500 mt-2">{wellness.food.mealRhythm}</p>
       </div>
 
       {/* 🏠 Home */}
-      <div className="mystic-card rounded-3xl p-6">
+      <div className="mystic-card rounded-2xl p-6">
         <SectionTitle emoji="🏠" title="Nest · 住" />
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div className="flex gap-2">
-            <span className="text-earth-500">Bed:</span>
-            <span className="text-indigo-800/80">
-              {wellness.home.bedroomDirection}
-            </span>
+            <span className="text-gray-500">Bed:</span>
+            <span className="text-gray-300">{wellness.home.bedroomDirection}</span>
           </div>
           <div className="flex gap-2">
-            <span className="text-earth-500">Wealth Corner:</span>
-            <span className="text-indigo-800/80">
-              {wellness.home.wealthCorner}
-            </span>
+            <span className="text-gray-500">Wealth Corner:</span>
+            <span className="text-gray-300">{wellness.home.wealthCorner}</span>
           </div>
         </div>
-        <p className="text-xs text-earth-500 mt-3">
+        <p className="text-xs text-gray-500 mt-3">
           {wellness.home.seasonalAdjustment}
         </p>
       </div>
 
       {/* 🧘 Body */}
-      <div className="mystic-card rounded-3xl p-6">
+      <div className="mystic-card rounded-2xl p-6">
         <SectionTitle emoji="🧘" title="Body · 身" />
         <div className="space-y-3 text-sm">
           <div>
-            <span className="text-earth-500">Focus:</span>{" "}
-            <span className="text-indigo-800/80">
-              {wellness.body.meridianFocus}
-            </span>
+            <span className="text-gray-500">Focus:</span>{" "}
+            <span className="text-gray-300">{wellness.body.meridianFocus}</span>
           </div>
-          <div className="p-3 rounded-2xl bg-cream-200/60">
-            <p className="text-xs text-gold-500 font-medium">
-              Your 2-Minute Ritual
-            </p>
-            <p className="text-indigo-800/80 mt-1">
-              {wellness.body.selfCareRitual}
-            </p>
+          <div className="p-3 rounded-xl bg-mystic-700/50">
+            <p className="text-xs text-gold-400 font-medium">Your 2-Minute Ritual</p>
+            <p className="text-gray-300 mt-1">{wellness.body.selfCareRitual}</p>
           </div>
           <div>
-            <span className="text-earth-500">Emotional rhythm:</span>{" "}
-            <span className="text-indigo-800/80">
-              {wellness.body.emotionalCycle}
-            </span>
+            <span className="text-gray-500">Emotional rhythm:</span>{" "}
+            <span className="text-gray-300">{wellness.body.emotionalCycle}</span>
           </div>
           <div>
-            <span className="text-earth-500">Sleep:</span>{" "}
-            <span className="text-indigo-800/80">
-              {wellness.body.sleepGuide}
-            </span>
+            <span className="text-gray-500">Sleep:</span>{" "}
+            <span className="text-gray-300">{wellness.body.sleepGuide}</span>
           </div>
         </div>
       </div>
 
       {/* 💎 Featured Crystal */}
       {wellness.crystalSet.length > 0 && (
-        <div className="mystic-card rounded-3xl p-6 glow">
+        <div className="mystic-card rounded-2xl p-6 glow">
           <SectionTitle emoji="💎" title="Your Crystal Companion" />
-          <div className="flex items-center gap-4 p-3 rounded-2xl bg-cream-200/60">
+          <div className="flex items-center gap-4 p-3 rounded-xl bg-mystic-700/40">
             <span className="text-3xl">💎</span>
             <div>
-              <p className="font-medium text-indigo-900 text-sm">
+              <p className="font-medium text-white text-sm">
                 {wellness.crystalSet[0].crystal}{" "}
-                <span className="text-xs text-gold-500">
+                <span className="text-xs text-gold-400">
                   ({wellness.crystalSet[0].element})
                 </span>
               </p>
-              <p className="text-xs text-indigo-800/60">
-                {wellness.crystalSet[0].wearing} —{" "}
-                {wellness.crystalSet[0].benefit}
+              <p className="text-xs text-gray-400">
+                {wellness.crystalSet[0].wearing} — {wellness.crystalSet[0].benefit}
               </p>
             </div>
           </div>
@@ -232,14 +205,14 @@ export default function WellnessReport({
       )}
 
       {/* 🏺 Home Product */}
-      <div className="mystic-card rounded-3xl p-5 bg-gradient-to-r from-cream-200/60 to-cream-100/80">
+      <div className="mystic-card rounded-2xl p-5 bg-gradient-to-r from-mystic-700/50 to-mystic-800/50">
         <div className="flex gap-3">
           <span className="text-2xl">🏺</span>
           <div>
-            <p className="font-medium text-indigo-900 text-sm">
+            <p className="font-medium text-white text-sm">
               {wellness.homeProduct.name}
             </p>
-            <p className="text-xs text-indigo-800/60">
+            <p className="text-xs text-gray-400">
               {wellness.homeProduct.placement} — {wellness.homeProduct.benefit}
             </p>
           </div>
@@ -247,19 +220,19 @@ export default function WellnessReport({
       </div>
 
       {/* 2026 Forecast */}
-      <div className="mystic-card rounded-3xl p-5">
+      <div className="mystic-card rounded-2xl p-5">
         <SectionTitle emoji="🐴" title="2026 · Year of the Horse" />
-        <p className="text-indigo-800/80 text-sm leading-relaxed">
+        <p className="text-gray-200 text-sm leading-relaxed">
           {wellness.forecast2026}
         </p>
       </div>
 
       {/* Daily Mantra */}
       <div className="text-center py-6">
-        <p className="text-gold-500 text-lg italic font-medium">
+        <p className="text-gold-300 text-lg italic font-medium">
           {wellness.mantra}
         </p>
-        <p className="text-xs text-earth-500 mt-2">Your morning affirmation</p>
+        <p className="text-xs text-gray-500 mt-2">Your morning affirmation</p>
       </div>
     </div>
   );

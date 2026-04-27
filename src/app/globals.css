@@ -1,28 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cream-50: #fdfaf5;
-  --color-cream-100: #faf3e6;
-  --color-cream-200: #f5e8d0;
-  --color-cream-300: #ede0c8;
-  --color-earth-400: #c4a47a;
-  --color-earth-500: #b08968;
-  --color-gold-300: #c9a84c;
-  --color-gold-400: #b8942e;
-  --color-gold-500: #9e7e22;
-  --color-sage-300: #a3b18a;
-  --color-sage-400: #8a9a6e;
-  --color-sage-500: #6b7d4e;
-  --color-indigo-800: #2d2040;
-  --color-indigo-900: #1e1630;
-  --color-indigo-950: #120c20;
-  --color-rose-400: #c97b6b;
-  --color-rose-500: #b86555;
+  --color-mystic-950: #0a0614;
+  --color-mystic-900: #110d1f;
+  --color-mystic-800: #1a1530;
+  --color-mystic-700: #2d2548;
+  --color-mystic-600: #3d3460;
+  --color-gold-400: #d4a853;
+  --color-gold-300: #e8cc7a;
+  --color-gold-200: #f0d78c;
+  --color-gold-100: #f8ebc0;
 }
 
 body {
-  background-color: var(--color-cream-50);
-  color: var(--color-indigo-900);
+  background-color: var(--color-mystic-950);
+  color: #e8e0f0;
 }
 
 @keyframes fadeInUp {
@@ -45,41 +37,39 @@ body {
 }
 
 .gold-text {
-  background: linear-gradient(135deg, #b8942e, #c9a84c, #b8942e);
+  background: linear-gradient(135deg, #d4a853, #f8ebc0, #d4a853);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .mystic-card {
-  background: linear-gradient(135deg, rgba(250, 243, 230, 0.9), rgba(245, 232, 208, 0.7));
-  border: 1px solid rgba(184, 148, 46, 0.15);
-  box-shadow: 0 2px 12px rgba(30, 22, 48, 0.06);
+  background: linear-gradient(135deg, rgba(26, 21, 48, 0.8), rgba(45, 37, 72, 0.6));
+  border: 1px solid rgba(212, 168, 83, 0.15);
+  backdrop-filter: blur(10px);
 }
 
 .mystic-card:hover {
-  border-color: rgba(184, 148, 46, 0.35);
-  box-shadow: 0 4px 20px rgba(30, 22, 48, 0.1);
+  border-color: rgba(212, 168, 83, 0.35);
 }
 
 .glow {
-  box-shadow: 0 0 40px rgba(184, 148, 46, 0.12), 0 0 80px rgba(184, 148, 46, 0.06);
+  box-shadow: 0 0 40px rgba(212, 168, 83, 0.1), 0 0 80px rgba(212, 168, 83, 0.05);
 }
 
 /* Chat bubbles */
 .clara-bubble {
-  background: var(--color-indigo-800);
-  color: #faf3e6;
+  background: var(--color-mystic-700);
+  color: #e8e0f0;
   border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
 }
 
 .user-bubble {
-  background: var(--color-sage-300);
-  color: var(--color-indigo-900);
+  background: rgba(212, 168, 83, 0.2);
+  color: #f0d78c;
   border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
 }
 
-/* Warm scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-cream-100); }
-::-webkit-scrollbar-thumb { background: var(--color-earth-400); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--color-mystic-950); }
+::-webkit-scrollbar-thumb { background: var(--color-mystic-600); border-radius: 3px; }

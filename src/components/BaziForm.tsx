@@ -1,6 +1,6 @@
 "use client";
 
-import { BirthData, BaziResult } from "@/types";
+import { BirthData } from "@/types";
 import { useState } from "react";
 
 interface Props {
@@ -37,17 +37,16 @@ export default function BaziForm({ onSubmit, loading }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Gender Toggle */}
       <div>
-        <label className="block text-sm font-medium text-indigo-800 mb-2">Gender</label>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => setGender("male")}
-            className={`flex-1 py-3 rounded-2xl border text-sm font-medium transition-all ${
+            className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-all ${
               gender === "male"
-                ? "border-gold-400 bg-gold-400/10 text-gold-500"
-                : "border-cream-300 bg-cream-100/80 text-indigo-800/60 hover:border-cream-400"
+                ? "border-gold-400 bg-gold-400/10 text-gold-300"
+                : "border-mystic-600 bg-mystic-800/50 text-gray-400 hover:border-mystic-500"
             }`}
           >
             ♂ Male
@@ -55,10 +54,10 @@ export default function BaziForm({ onSubmit, loading }: Props) {
           <button
             type="button"
             onClick={() => setGender("female")}
-            className={`flex-1 py-3 rounded-2xl border text-sm font-medium transition-all ${
+            className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-all ${
               gender === "female"
-                ? "border-gold-400 bg-gold-400/10 text-gold-500"
-                : "border-cream-300 bg-cream-100/80 text-indigo-800/60 hover:border-cream-400"
+                ? "border-gold-400 bg-gold-400/10 text-gold-300"
+                : "border-mystic-600 bg-mystic-800/50 text-gray-400 hover:border-mystic-500"
             }`}
           >
             ♀ Female
@@ -66,22 +65,21 @@ export default function BaziForm({ onSubmit, loading }: Props) {
         </div>
       </div>
 
-      {/* Date inputs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div>
-          <label className="block text-sm font-medium text-indigo-800 mb-1">Year</label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Year</label>
           <input
             type="number"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
             min={1900}
             max={2100}
-            className="w-full py-3 px-4 rounded-2xl bg-cream-100/80 border border-cream-300 text-indigo-900 placeholder:text-earth-400 focus:outline-none focus:border-gold-400 transition-all"
+            className="w-full py-3 px-4 rounded-xl bg-mystic-800/80 border border-mystic-600 text-white placeholder-gray-500 transition-all focus:outline-none focus:border-gold-400"
             placeholder="1990"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-indigo-800 mb-1">Month</label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Month</label>
           <select
             value={month}
             onChange={(e) => {
@@ -89,7 +87,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
               setMonth(m);
               if (day > new Date(year, m, 0).getDate()) setDay(1);
             }}
-            className="w-full py-3 px-4 rounded-2xl bg-cream-100/80 border border-cream-300 text-indigo-900 focus:outline-none focus:border-gold-400 transition-all appearance-none"
+            className="w-full py-3 px-4 rounded-xl bg-mystic-800/80 border border-mystic-600 text-white transition-all appearance-none focus:outline-none focus:border-gold-400"
           >
             {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
               <option key={m} value={m}>
@@ -99,11 +97,11 @@ export default function BaziForm({ onSubmit, loading }: Props) {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-indigo-800 mb-1">Day</label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Day</label>
           <select
             value={day}
             onChange={(e) => setDay(Number(e.target.value))}
-            className="w-full py-3 px-4 rounded-2xl bg-cream-100/80 border border-cream-300 text-indigo-900 focus:outline-none focus:border-gold-400 transition-all appearance-none"
+            className="w-full py-3 px-4 rounded-xl bg-mystic-800/80 border border-mystic-600 text-white transition-all appearance-none focus:outline-none focus:border-gold-400"
           >
             {dayOptions.map((d) => (
               <option key={d} value={d}>
@@ -113,14 +111,14 @@ export default function BaziForm({ onSubmit, loading }: Props) {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-indigo-800 mb-1">
+          <label className="block text-sm font-medium text-gray-300 mb-1">
             Hour (0-23)
-            <span className="text-earth-500 ml-1 text-xs">24h</span>
+            <span className="text-gray-500 ml-1 text-xs">24h</span>
           </label>
           <select
             value={hour}
             onChange={(e) => setHour(Number(e.target.value))}
-            className="w-full py-3 px-4 rounded-2xl bg-cream-100/80 border border-cream-300 text-indigo-900 focus:outline-none focus:border-gold-400 transition-all appearance-none"
+            className="w-full py-3 px-4 rounded-xl bg-mystic-800/80 border border-mystic-600 text-white transition-all appearance-none focus:outline-none focus:border-gold-400"
           >
             {Array.from({ length: 24 }, (_, i) => i).map((h) => (
               <option key={h} value={h}>
@@ -131,14 +129,14 @@ export default function BaziForm({ onSubmit, loading }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-earth-500">
+      <p className="text-xs text-gray-500">
         Enter your local birth time. We adjust it for Ba Zi calculation.
       </p>
 
       {errors.length > 0 && (
-        <div className="p-3 rounded-2xl bg-rose-400/10 border border-rose-400/30">
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30">
           {errors.map((e) => (
-            <p key={e} className="text-rose-500 text-sm">{e}</p>
+            <p key={e} className="text-red-400 text-sm">{e}</p>
           ))}
         </div>
       )}
@@ -146,7 +144,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-gold-400 to-gold-500 text-white font-semibold text-lg hover:from-gold-500 hover:to-gold-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
       >
         {loading ? (
           <span className="flex items-center justify-center gap-2">

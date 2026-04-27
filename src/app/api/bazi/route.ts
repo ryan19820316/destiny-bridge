@@ -34,10 +34,13 @@ export async function POST(req: NextRequest) {
     const birthData = { year: numYear, month: numMonth, day: numDay, hour: numHour, gender };
     const baziResult = calculateBazi(birthData);
 
+    // Only generate AI report if explicitly requested — keeps basic chart lookup instant
+    const generateAI = body.generateAI === true;
+
     let wellnessReport = null;
     let aiError = null;
 
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (generateAI && process.env.ANTHROPIC_API_KEY) {
       try {
         const chartText = formatChartForAI(baziResult, birthData);
         wellnessReport = await generateWellnessReport(chartText, birthData);
