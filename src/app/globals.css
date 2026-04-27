@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mystic-950: #0a0614;
+  --color-mystic-900: #110d1f;
+  --color-mystic-800: #1a1530;
+  --color-mystic-700: #2d2548;
+  --color-mystic-600: #3d3460;
+  --color-gold-400: #d4a853;
+  --color-gold-300: #e8cc7a;
+  --color-gold-200: #f0d78c;
+  --color-gold-100: #f8ebc0;
+}
+
+body {
+  background-color: var(--color-mystic-950);
+  color: #e8e0f0;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-delay-1 {
+  animation: fadeInUp 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-2 {
+  animation: fadeInUp 0.6s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #d4a853, #f8ebc0, #d4a853);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mystic-card {
+  background: linear-gradient(135deg, rgba(26, 21, 48, 0.8), rgba(45, 37, 72, 0.6));
+  border: 1px solid rgba(212, 168, 83, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.mystic-card:hover {
+  border-color: rgba(212, 168, 83, 0.35);
+}
+
+.glow {
+  box-shadow: 0 0 40px rgba(212, 168, 83, 0.1), 0 0 80px rgba(212, 168, 83, 0.05);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-mystic-950); }
+::-webkit-scrollbar-thumb { background: var(--color-mystic-600); border-radius: 3px; }
