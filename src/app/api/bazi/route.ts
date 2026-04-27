@@ -1,5 +1,5 @@
 import { calculateBazi, formatChartForAI } from "@/lib/bazi";
-import { generateWellnessReport, generateAIReport } from "@/lib/ai";
+import { generateWellnessReport } from "@/lib/ai";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -35,16 +35,12 @@ export async function POST(req: NextRequest) {
     const baziResult = calculateBazi(birthData);
 
     let wellnessReport = null;
-    let aiReport = null;
     let aiError = null;
 
     if (process.env.ANTHROPIC_API_KEY) {
       try {
         const chartText = formatChartForAI(baziResult, birthData);
-        // New wellness-focused report
         wellnessReport = await generateWellnessReport(chartText, birthData);
-        // Also generate legacy report for backward compatibility
-        aiReport = await generateAIReport(chartText, birthData);
       } catch (e) {
         aiError = e instanceof Error ? e.message : "AI interpretation failed";
         console.error("AI generation failed:", aiError);
@@ -53,7 +49,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ...baziResult,
-      aiReport,
       wellnessReport,
       aiError,
     });

@@ -31,14 +31,12 @@ export interface TenGodResult {
   element: Element;
 }
 
-// ---- NEW: Wellness-Focused AI Report ----
+// ---- Wellness Report (one-time purchase) ----
 export interface WellnessReport {
-  // Core Bazi insight (one-time purchase)
   blueprint: string;
   constitution: Constitution;
   constitutionExplanation: string;
 
-  // Five Pillars of Daily Life
   food: {
     favorableIngredients: string[];
     avoidIngredients: string[];
@@ -68,14 +66,9 @@ export interface WellnessReport {
     sleepGuide: string;
   };
 
-  // Crystal & Product Recommendations
   crystalSet: { crystal: string; element: string; wearing: string; benefit: string }[];
   homeProduct: { name: string; placement: string; benefit: string };
-
-  // 2026 Forecast
   forecast2026: string;
-
-  // Daily mantra
   mantra: string;
 }
 
@@ -83,7 +76,7 @@ export interface WellnessReport {
 export interface DailyGuidance {
   date: string;
   lunarDate: string;
-  energyIndex: number; // 1-10
+  energyIndex: number;
   energySummary: string;
   food: { ingredient: string; tip: string; simpleRecipe: string };
   clothing: { powerColor: string; avoidColor: string; styleTip: string };
@@ -93,24 +86,46 @@ export interface DailyGuidance {
   mantra: string;
 }
 
-// ---- Referral & Community ----
-export interface ReferralCode {
-  code: string;
-  ownerId: string;
-  totalInvites: number;
-  totalCommission: number;
-  invitees: { id: string; joinedAt: string; totalSpent: number }[];
+// ---- User Profile (localStorage-based) ----
+export interface UserProfile {
+  name: string;
+  nickname: string;
+  baziData: BirthData | null;
+  preferredTone: "gentle" | "direct" | "humorous";
+  recurringThemes: string[];
+  languagePreference: "en" | "zh";
+  membershipStatus: "free" | "trial" | "active" | "expired";
+  trialStartDate: string | null;
+  lastChatClearDate: string;
+  conversationHistory: VentMessage[];
 }
 
-export interface FamilyGroup {
+export interface VentMessage {
+  role: "user" | "clara";
+  content: string;
+  timestamp: string;
+}
+
+export interface VentResponse {
+  emotionalNote: string;
+  elementReframe: string;
+  suggestion: string;
+}
+
+// ---- Feng Shui Shop ----
+export interface ShopProduct {
   id: string;
   name: string;
-  ownerId: string;
-  members: { userId: string; relationship: string; baziResult?: BaziResult }[];
-  createdAt: string;
+  category: "crystals" | "home-decor" | "jewelry" | "tea-herbs";
+  description: string;
+  price: number;
+  memberPrice: number | null;
+  affiliateUrl: string;
+  imageEmoji: string;
+  element: Element;
 }
 
-// ---- Legacy (kept for backward compat) ----
+// ---- Legacy ----
 export interface AIReport {
   summary: string;
   personality: string;

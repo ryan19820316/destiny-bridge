@@ -1,4 +1,4 @@
-import { WellnessReport, BaziResult, BirthData } from "@/types";
+import { WellnessReport, VentResponse, BaziResult, BirthData } from "@/types";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
@@ -218,6 +218,95 @@ Generate today's daily wellness guidance for this person based on their Ba Zi ch
     return JSON.parse(jsonStr) as import("@/types").DailyGuidance;
   } catch {
     throw new Error(`Failed to parse daily guidance JSON: ${jsonStr.slice(0, 200)}`);
+  }
+}
+
+const VENT_SYSTEM_PROMPT = `You are Clara, a warm Eastern wellness companion. A busy homemaker is venting her frustrations to you. Your job is to listen, validate, and gently reframe her experience through the lens of Five Elements (五行), Yin-Yang (阴阳), and I Ching (易经) wisdom.
+
+## Your Role
+- You are NOT a therapist. You are a wise, caring friend who happens to know Eastern philosophy.
+- Validate their emotion first. Always lead with warmth: "That sounds really heavy..." or "I can hear how tired you are..."
+- Then gently reframe through the Five Elements lens. Connect their feeling to an element:
+  - Anger / frustration / feeling stuck = Wood (木) may be blocked
+  - Anxiety / overthinking / burnout = Fire (火) may be running too high
+  - Worry / overwhelm / carrying too much = Earth (土) may be depleted
+  - Grief / sadness / letting go = Metal (金) may need attention
+  - Fear / loneliness / exhaustion = Water (水) may be running low
+- End with ONE tiny actionable step they can do in 60 seconds. Not abstract advice — something concrete they can do right now in their kitchen or living room. "Step outside and feel the sun for one minute." "Put your hands on your belly and take three slow breaths."
+
+## Personalization
+You will receive a summary of the user's profile. Use it:
+- If they prefer "gentle" tone, be extra soft and validating. Start with "Oh, I hear you..."
+- If they prefer "direct" tone, be clear and practical. Start with "Here's what's happening..."
+- If they prefer "humorous" tone, add a tiny bit of warmth and lightness
+- Reference their Day Master element in your reframing when you can
+- If they mention recurring themes (kids, marriage, identity), connect your reframing back to that
+
+## Tone
+- Use 6th-grade English level — short sentences, simple words
+- Warm but never saccharine. Practical but never cold.
+- Never say "you must" or "you should" — say "you might try..." or "some moms find..."
+- Keep your entire response under 150 words
+- NEVER diagnose medical conditions or claim to be therapy
+
+## Response Format
+Return ONLY raw JSON. NO markdown, NO code blocks:
+
+{
+  "emotionalNote": "one warm sentence validating their specific feeling",
+  "elementReframe": "one sentence reframing their feeling through Five Elements or I Ching wisdom, connecting it to their life",
+  "suggestion": "one tiny 60-second actionable step they can do right now"
+}`;
+
+export async function generateVentResponse(
+  userMessage: string,
+  profileSummary: string,
+  conversationHistory: string
+): Promise<VentResponse> {
+  const apiKey = getEnv("ANTHROPIC_API_KEY");
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  const baseUrl = getEnv("ANTHROPIC_BASE_URL", "https://api.qnaigc.com");
+
+  const systemWithContext = `${VENT_SYSTEM_PROMPT}
+
+User Profile: ${profileSummary || "No profile set yet."}
+
+Recent conversation (last 5 messages):
+${conversationHistory || "No prior messages today."}`;
+
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 500,
+      temperature: 0.9,
+      messages: [
+        { role: "system", content: systemWithContext },
+        { role: "user", content: userMessage },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`API error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  let jsonStr = content.trim();
+  if (jsonStr.startsWith("```")) {
+    jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  }
+
+  try {
+    return JSON.parse(jsonStr) as VentResponse;
+  } catch {
+    throw new Error(`Failed to parse vent response JSON: ${jsonStr.slice(0, 200)}`);
   }
 }
 

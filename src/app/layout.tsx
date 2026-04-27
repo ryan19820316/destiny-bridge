@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DestinyBridge — AI-Powered Ba Zi Reading & Crystal Healing",
+  title: "DestinyBridge — Eastern Wellness for Modern Moms",
   description:
-    "Discover your energetic blueprint with ancient Chinese wisdom and modern AI. Get personalized Ba Zi readings, 2026 forecasts, and crystal recommendations.",
+    "Personalized Ba Zi readings, daily wellness tips, and a warm space to vent. Ancient wisdom meets modern AI — for the mom who holds everything together.",
 };
 
 export default function RootLayout({

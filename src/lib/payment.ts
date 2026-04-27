@@ -10,19 +10,15 @@ export function createLemonSqueezyCheckout(variantId: string, email?: string) {
 }
 
 export const PRICING = {
-  basicReport: {
-    variantId: "basic-report", // Replace with actual Lemon Squeezy variant ID
-    price: 19.99,
-    name: "Full Ba Zi Report",
-  },
-  monthlySubscription: {
-    variantId: "monthly-sub",
+  baziTest: {
+    variantId: "bazi-test",
     price: 9.99,
-    name: "Monthly Fortune Guide",
+    name: "Bazi Wellness Blueprint",
   },
-  premiumSubscription: {
-    variantId: "premium-sub",
-    price: 19.99,
-    name: "Premium Destiny Navigator",
+  claraMembership: {
+    variantId: "clara-monthly",
+    price: 6.99,
+    name: "Clara Membership",
+    trialDays: 7,
   },
 };
