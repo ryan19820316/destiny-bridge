@@ -1,54 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import { calculateXiaoLiuRen } from "@/lib/liuren";
-import { generateLiurenQuick, generateLiurenDeep } from "@/lib/ai";
+import { callDoubao, parseJsonFromLLM, getDoubaoKey } from "@/lib/doubao";
+import { buildLiurenUserMessage, getLiurenSystemPrompt } from "@/lib/liuren-prompt";
 import {
   isMemberActive,
   getDailyLiurenCount,
   incrementLiurenCount,
-  canQueryLiuren,
   saveLiurenQuery,
   getProfile,
 } from "@/lib/profile";
-import { calculateBazi, formatChartForAI } from "@/lib/bazi";
-import { QuestionCategory, LiurenQuickResult, LiurenDeepResult, LiurenPalaceData } from "@/types";
+import { QuestionCategory } from "@/types";
 
-function getDomainText(palace: LiurenPalaceData, category: QuestionCategory): string {
-  const map: Record<QuestionCategory, keyof LiurenPalaceData["domains"]> = {
-    love: "love",
-    family: "family",
-    health: "health",
-    career: "career",
-    daily: "wealth", // fallback — daily uses general wealth/career as closest
-  };
-  return palace.domains[map[category]] || palace.domains.love;
+function hourToShichenIndex(hhMM: string): number {
+  const h = parseInt(hhMM.split(":")[0], 10);
+  if (h >= 23 || h < 1) return 1;   // 子
+  if (h >= 1 && h < 3) return 2;    // 丑
+  if (h >= 3 && h < 5) return 3;    // 寅
+  if (h >= 5 && h < 7) return 4;    // 卯
+  if (h >= 7 && h < 9) return 5;    // 辰
+  if (h >= 9 && h < 11) return 6;   // 巳
+  if (h >= 11 && h < 13) return 7;  // 午
+  if (h >= 13 && h < 15) return 8;  // 未
+  if (h >= 15 && h < 17) return 9;  // 申
+  if (h >= 17 && h < 19) return 10; // 酉
+  if (h >= 19 && h < 21) return 11; // 戌
+  return 12;                         // 亥 (21-23)
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const category: QuestionCategory = body.category || "daily";
+    const {
+      question,
+      solarDate,
+      timeHHMM,
+      gender,
+      category,
+    } = body;
+
     const validCategories: QuestionCategory[] = ["love", "family", "health", "career", "daily"];
-    if (!validCategories.includes(category)) {
+    const cat: QuestionCategory = validCategories.includes(category) ? category : "daily";
+
+    if (!question || !solarDate || !timeHHMM) {
       return NextResponse.json(
-        { error: "Invalid category. Must be: love, family, health, career, daily" },
+        { error: "缺少必填参数：question, solarDate, timeHHMM", errorEn: "Missing required fields: question, solarDate, timeHHMM" },
         { status: 400 }
+      );
+    }
+
+    if (!getDoubaoKey()) {
+      return NextResponse.json(
+        { error: "AI 服务未配置", errorEn: "AI service is not configured" },
+        { status: 503 }
       );
     }
 
     const profile = getProfile();
     const memberActive = isMemberActive();
-
-    // Calculate divination (no AI — instant)
-    const divination = calculateXiaoLiuRen();
-    const { palace, lunarDateStr, timeZhi, hourIndex, palaceIndex } = divination;
+    const hourIndex = hourToShichenIndex(timeHHMM);
 
     // Anti-abuse: same category + same shichen can't be re-queried
-    if (!canQueryLiuren(category, hourIndex)) {
+    const { canQueryLiuren } = await import("@/lib/profile");
+    if (!canQueryLiuren(cat, hourIndex)) {
       return NextResponse.json(
         {
           error: "同一时辰此事已卜过，请静候时辰更替后再问。",
           errorEn: "You've already asked about this during the current time period. Please wait for the next two-hour period.",
-          nextAvailable: `Next 时辰: ${hourIndex + 1 > 12 ? 1 : hourIndex + 1}`,
+          nextAvailable: `Next shichen: ${hourIndex + 1 > 12 ? 1 : hourIndex + 1}`,
         },
         { status: 429 }
       );
@@ -58,12 +75,7 @@ export async function POST(req: NextRequest) {
     if (!memberActive) {
       const dailyCount = getDailyLiurenCount();
       if (dailyCount >= 1) {
-        // Return the divination result anyway, but mark it as limited
         return NextResponse.json({
-          palace,
-          lunarDateStr,
-          timeZhi,
-          category,
           limited: true,
           dailyFreeUsed: dailyCount,
           message: "今日免费次数已用完。升级会员享受无限深度推演。",
@@ -73,91 +85,74 @@ export async function POST(req: NextRequest) {
       incrementLiurenCount();
     }
 
-    // Save query record for anti-abuse
+    // Save query record
     saveLiurenQuery({
-      category,
-      palaceIndex,
+      category: cat,
+      palaceIndex: 0, // will be determined by Doubao
       hourIndex,
       date: new Date().toISOString().slice(0, 10),
       timestamp: new Date().toISOString(),
     });
 
-    // Build Ba Zi context for deep readings (member only)
-    let baziContext = "";
-    let chartData = "";
-    if (memberActive && profile.baziData) {
-      try {
-        const bazi = calculateBazi(profile.baziData);
-        chartData = formatChartForAI(bazi, profile.baziData);
-        baziContext = `Day Master: ${bazi.dayMaster.stem} (${bazi.dayMaster.element}), Strength: ${bazi.dayMaster.strength}. Favorable elements: ${bazi.favorableElements.join(", ")}. Five Elements: ${JSON.stringify(bazi.elements)}.`;
-      } catch { /* ignore bazi calc errors */ }
-    }
+    const systemPrompt = getLiurenSystemPrompt(memberActive);
+    const userMessage = buildLiurenUserMessage({
+      question,
+      solarDate,
+      timeHHMM,
+      gender: gender || undefined,
+      category: cat,
+    });
 
-    if (memberActive) {
-      // Deep interpretation with AI
-      const deep = await generateLiurenDeep(
-        palace,
-        category,
-        baziContext,
-        profile.nickname ? `User: ${profile.nickname}, Tone: ${profile.preferredTone}` : ""
-      );
+    const content = await callDoubao(systemPrompt, userMessage, {
+      temperature: 0.8,
+      max_tokens: memberActive ? 2000 : 600,
+      response_format: { type: "json_object" },
+    });
 
-      const result: LiurenDeepResult = {
-        palace,
-        lunarDateStr,
-        timeZhi,
-        category,
-        deepInterpretation: deep.deepInterpretation,
-        elementAnalysis: deep.elementAnalysis,
-        domainAnalysis: deep.domainAnalysis,
-        actionAdvice: deep.actionAdvice,
-        timestamp: new Date().toISOString(),
-      };
-
-      return NextResponse.json({
-        ...result,
-        level: "deep",
-        memberActive: true,
-      });
-    }
-
-    // Quick interpretation for free tier
+    const jsonStr = parseJsonFromLLM(content);
+    let result;
     try {
-      const quick = await generateLiurenQuick(palace, category);
-      const result: LiurenQuickResult = {
-        palace,
-        lunarDateStr,
-        timeZhi,
-        category,
-        interpretation: quick.interpretation,
-        timestamp: new Date().toISOString(),
-      };
-
-      return NextResponse.json({
-        ...result,
-        level: "quick",
-        memberActive: false,
-      });
+      result = JSON.parse(jsonStr);
     } catch {
-      // If AI fails, return the palace data with traditional interpretation as fallback
-      const result: LiurenQuickResult = {
-        palace,
-        lunarDateStr,
-        timeZhi,
-        category,
-        interpretation: `${palace.name} (${palace.nameEn}) — ${palace.auspiciousness}. ${getDomainText(palace, category)}`,
-        timestamp: new Date().toISOString(),
-      };
-
       return NextResponse.json({
-        ...result,
-        level: "quick",
-        memberActive: false,
-        aiFallback: true,
-      });
+        error: "豆包返回解析失败，请稍后再试",
+        errorEn: "Failed to parse AI response. Please try again.",
+        rawContent: jsonStr.slice(0, 500),
+      }, { status: 500 });
     }
+
+    return NextResponse.json({
+      palaceName: result.palaceName || "",
+      palaceNameEn: result.palaceNameEn || "",
+      auspiciousness: result.auspiciousness || "",
+      element: result.element || "",
+      elementEn: result.elementEn || "",
+      symbol: result.symbol || "",
+      symbolEn: result.symbolEn || "",
+      direction: result.direction || "",
+      directionEn: result.directionEn || "",
+      lunarDate: result.lunarDate || "",
+      solarDate: result.solarDate || solarDate,
+      timeZhi: result.timeZhi || "",
+      calculation: result.calculation || "",
+      interpretation: result.interpretation || "",
+      interpretationEn: result.interpretationEn || "",
+      elementAnalysis: result.elementAnalysis || "",
+      elementAnalysisEn: result.elementAnalysisEn || "",
+      actionAdvice: result.actionAdvice || "",
+      actionAdviceEn: result.actionAdviceEn || "",
+      encouragement: result.encouragement || "",
+      encouragementEn: result.encouragementEn || "",
+      category: cat,
+      level: memberActive ? "deep" : "quick",
+      memberActive,
+      timestamp: new Date().toISOString(),
+    });
   } catch (e) {
     console.error("Liuren API error:", e);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

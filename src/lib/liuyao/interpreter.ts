@@ -1,3 +1,4 @@
+/** @deprecated Liu Yao interpretation moved to Doubao API. See src/lib/liuyao-prompt.ts */
 import type { Branch, Element } from "@/types";
 
 const BRANCH_ELEMENT: Record<Branch, Element> = {

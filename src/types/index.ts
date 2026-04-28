@@ -130,7 +130,7 @@ export interface ShopProduct {
 
 // ---- Xiao Liu Ren (小六壬) Divination ----
 export type LiurenPalace = "大安" | "留连" | "速喜" | "赤口" | "小吉" | "空亡";
-export type QuestionCategory = "love" | "family" | "health" | "career" | "daily";
+export type QuestionCategory = "love" | "family" | "health" | "career" | "daily" | "wealth";
 export type LiurenLevel = "quick" | "deep";
 
 export interface LiurenPalaceData {

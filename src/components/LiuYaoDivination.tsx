@@ -9,12 +9,7 @@ import {
   startFreeTrial,
 } from "@/lib/profile";
 import type { UserProfile } from "@/types";
-import type {
-  CoinTossLine,
-  LiuYaoQuickResult,
-  LiuYaoDeepResult,
-  QuestionCategory,
-} from "@/lib/liuyao/types";
+import type { CoinTossLine, QuestionCategory } from "@/lib/liuyao/types";
 
 // ---- i18n ----
 type Lang = "zh" | "en";
@@ -26,10 +21,14 @@ const T = {
     health: { zh: "健康", en: "Health" },
     daily: { zh: "日常", en: "Daily" },
   } as Record<QuestionCategory, Record<Lang, string>>,
-  emoji: {
-    love: "💕", career: "💼", wealth: "💰", health: "🌿", daily: "✨",
-  },
+  emoji: { love: "💕", career: "💼", wealth: "💰", health: "🌿", daily: "✨" },
   lineLabel: { 1: { zh: "初爻", en: "L1" }, 2: { zh: "二爻", en: "L2" }, 3: { zh: "三爻", en: "L3" }, 4: { zh: "四爻", en: "L4" }, 5: { zh: "五爻", en: "L5" }, 6: { zh: "上爻", en: "L6" } } as Record<number, Record<Lang, string>>,
+  questionLabel: { zh: "你想问什么事？（一事一问）", en: "What's your question? (one topic per reading)" },
+  questionPlaceholder: { zh: "例如：这次投资能不能赚？我和他能不能复合？", en: "e.g. Will this investment pay off? Will we get back together?" },
+  dateLabel: { zh: "摇卦日期", en: "Divination Date" },
+  genderLabel: { zh: "性别", en: "Gender" },
+  male: { zh: "男", en: "Male" },
+  female: { zh: "女", en: "Female" },
   meditate: { zh: "心中默念所求之事，然后摇动铜钱", en: "Focus on your question in mind, then toss the coins" },
   freeTierNote: { zh: "免费用户每日 1 次快速占卜 · 会员无限深度解读", en: "Free: 1 quick reading/day · Members: unlimited deep readings" },
   tossCoins: { zh: "摇铜钱起卦", en: "Toss Coins" },
@@ -42,10 +41,11 @@ const T = {
   retoss: { zh: "重新摇卦", en: "Toss Again" },
   interpreting: { zh: "解卦中，请稍候...", en: "Interpreting your hexagram..." },
   again: { zh: "再卜一卦 →", en: "Ask Another →" },
-  hexagram: { zh: "本卦", en: "Hexagram" },
+  hexagram: { zh: "本卦", en: "Original" },
   changed: { zh: "变卦", en: "→ Changes to" },
   staticHexagram: { zh: "静卦", en: "Static" },
-  movingLines: { zh: "有动爻", en: "Moving lines" },
+  movingLines: { zh: "动爻", en: "Moving lines" },
+  movingCount: { zh: "个动爻", en: " moving" },
   shi: { zh: "世", en: "Self" },
   ying: { zh: "应", en: "Other" },
   dailyUsed: { zh: "今日免费占卜次数已用完。升级会员享受无限深度解读。", en: "Today's free reading used. Upgrade to membership for unlimited deep readings." },
@@ -56,19 +56,29 @@ const T = {
   liuqinLabel: { zh: "六亲", en: "Relation" },
   liushenLabel: { zh: "六神", en: "Spirit" },
   markersLabel: { zh: "标记", en: "Mark" },
-  trigramUpper: { zh: "上卦", en: "Upper" },
-  trigramLower: { zh: "下卦", en: "Lower" },
-  interpretationTitle: { zh: "解卦", en: "Reading" },
-  plainLangTitle: { zh: "白话解读", en: "In Plain Words" },
+  interpretationTitle: { zh: "解读", en: "Reading" },
+  fortuneTitle: { zh: "总体判断", en: "Verdict" },
+  timingTitle: { zh: "应期预测", en: "Timing" },
+  yongShenTitle: { zh: "用神分析", en: "Focus Spirit" },
   linesTitle: { zh: "六爻排盘", en: "Six Lines" },
   upgradeTitle: { zh: "解锁无限占卜", en: "Unlock Unlimited Readings" },
   upgradeDesc: { zh: "升级Clara会员即可无限使用六爻占卜，并解锁AI深度解读——包含五行分析、行动建议和个性化指导。", en: "Upgrade to Clara Membership for unlimited Liu Yao readings with AI deep interpretation — element analysis, action advice, and personalized guidance." },
   startTrial: { zh: "开始 7 天免费试用 →", en: "Start 7-Day Free Trial →" },
   trialNote: { zh: "之后 $6.99/月。随时取消。", en: "Then $6.99/month. Cancel anytime." },
   freeTierUpsell: { zh: "以上为快速解卦。升级会员解锁 AI 深度解读——五行分析 · 行动建议 · 个性化指导", en: "Quick reading only. Upgrade to unlock AI deep interpretation with element analysis and personalized advice." },
+  elementAnalysisTitle: { zh: "五行分析", en: "Element Analysis" },
+  actionAdviceTitle: { zh: "行动建议", en: "Action Advice" },
+  claraReading: { zh: "Clara 深度解读", en: "Clara Deep Reading" },
+  fillQuestion: { zh: "请先填写你的占事", en: "Please enter your question first" },
+  fillGender: { zh: "请选择性别", en: "Please select your gender" },
 };
 
 const LINE_LABEL_KEYS = [6, 5, 4, 3, 2, 1] as const;
+
+function getTodayString(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 // ---- Line symbol ----
 function LineSymbol({ line }: { line: { isYang: boolean; isMoving: boolean } }) {
@@ -78,67 +88,7 @@ function LineSymbol({ line }: { line: { isYang: boolean; isMoving: boolean } }) 
   return <span className="text-gray-500 text-xl">━ ━</span>;
 }
 
-// ---- Plain-language interpretation builder ----
-function buildPlainInterpretation(
-  result: LiuYaoQuickResult,
-  lang: Lang,
-): string {
-  const lines = result.assembledLines;
-  const shi = lines.find((l) => l.isShi);
-  const ying = lines.find((l) => l.isYing);
-  const moving = lines.filter((l) => l.isMoving);
-
-  const parts: string[] = [];
-
-  if (lang === "zh") {
-    parts.push(`你卜得了【${result.hexagramName}】${result.changedHexagramName ? `，变为【${result.changedHexagramName}】` : "，为静卦"}。`);
-    if (result.isJingGua) {
-      parts.push("此卦没有动爻，表示所问之事当前处于平稳状态，不会有剧烈变化。");
-    } else {
-      parts.push(`此卦有 ${moving.length} 个动爻，表示事情正在变化中，需要你主动把握。`);
-    }
-    if (shi) {
-      parts.push(`世爻（代表你自己）在${T.lineLabel[shi.position].zh}位，属${shi.branch}${shi.branchElement}，六亲为${shi.liuqin}。`);
-    }
-    if (ying && shi) {
-      const rel = result.interpretation.match(/【世应】(.+)/);
-      if (rel) parts.push(`你与对方/环境的关系：${rel[1]}。`);
-    }
-    const jiXiong = result.interpretation.match(/【吉凶】(.+)/);
-    if (jiXiong) {
-      parts.push(`总体判断：${jiXiong[1]}。`);
-    }
-    const yingQi = result.interpretation.match(/【应期】(.+)/);
-    if (yingQi) {
-      parts.push(`时间提示：${yingQi[1]}。`);
-    }
-  } else {
-    parts.push(`You cast 【${result.hexagramName}】${result.changedHexagramName ? `, changing to 【${result.changedHexagramName}】` : " (static hexagram)"}.`);
-    if (result.isJingGua) {
-      parts.push("This is a static hexagram with no moving lines — the situation is stable and won't change dramatically on its own.");
-    } else {
-      parts.push(`This hexagram has ${moving.length} moving line(s) — things are shifting, and your actions can influence the outcome.`);
-    }
-    if (shi) {
-      const shiPos = T.lineLabel[shi.position].en;
-      parts.push(`The Self line (${shiPos}) represents you — it carries ${shi.liuqin} energy with the ${shi.branch} (${shi.branchElement}) branch.`);
-    }
-    if (ying && shi) {
-      parts.push("The Other line represents external factors — people, environment, circumstances around your question.");
-    }
-    const jiXiong = result.interpretation.match(/【吉凶】(.+)/);
-    if (jiXiong) {
-      const cnVerdict = jiXiong[1];
-      if (cnVerdict.includes("吉")) parts.push("Overall outlook: Favorable. Things are aligned in your favor.");
-      else if (cnVerdict.includes("凶")) parts.push("Overall outlook: Challenging. Patience and timing will be key.");
-      else parts.push("Overall outlook: Mixed. The outcome depends on timing and your response.");
-    }
-  }
-
-  return parts.join("\n\n");
-}
-
-// ---- Hexagram visual component ----
+// ---- Hexagram visual ----
 function HexagramDisplay({
   lines,
   lang,
@@ -151,10 +101,7 @@ function HexagramDisplay({
       {[...lines].reverse().map((line, i) => {
         const posIdx = 6 - i;
         return (
-          <div
-            key={line.position}
-            className="flex items-center justify-center gap-2 py-1"
-          >
+          <div key={line.position} className="flex items-center justify-center gap-2 py-1">
             <span className="text-[10px] text-gray-500 w-7 text-right shrink-0">
               {T.lineLabel[posIdx]?.[lang] ?? `L${posIdx}`}
             </span>
@@ -166,16 +113,68 @@ function HexagramDisplay({
   );
 }
 
+// Doubao response line type
+interface DoubaoLine {
+  position: number;
+  isYang: boolean;
+  isMoving: boolean;
+  branch: string;
+  branchElement: string;
+  branchElementEn: string;
+  liuqin: string;
+  liuqinEn: string;
+  liushen: string;
+  liushenEn: string;
+  isShi: boolean;
+  isYing: boolean;
+}
+
+interface DoubaoLiuyaoResponse {
+  hexagramName: string;
+  hexagramNameEn: string;
+  changedHexagramName: string;
+  changedHexagramNameEn: string;
+  palace: string;
+  palaceEn: string;
+  palaceElement: string;
+  palaceElementEn: string;
+  isJingGua: boolean;
+  movingLineCount: number;
+  lines: DoubaoLine[];
+  yongShen: string;
+  yongShenEn: string;
+  yongShenStrength: string;
+  yongShenStrengthEn: string;
+  movingLineEffects: string;
+  movingLineEffectsEn: string;
+  shiYingRelation: string;
+  shiYingRelationEn: string;
+  fortuneVerdict: string;
+  fortuneVerdictEn: string;
+  timingPrediction: string;
+  timingPredictionEn: string;
+  interpretation: string;
+  interpretationEn: string;
+  actionAdvice?: string;
+  actionAdviceEn?: string;
+  level: "quick" | "deep";
+  memberActive: boolean;
+  timestamp: string;
+}
+
 // ---- Main component ----
 export default function LiuYaoDivination() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [category, setCategory] = useState<QuestionCategory>("daily");
+  const [question, setQuestion] = useState("");
+  const [solarDate, setSolarDate] = useState(getTodayString());
+  const [gender, setGender] = useState<"男" | "女" | null>(null);
   const [phase, setPhase] = useState<
     "idle" | "tossing" | "revealed" | "loading" | "done" | "error" | "limit"
   >("idle");
   const [lines, setLines] = useState<CoinTossLine[]>([]);
   const [tossStep, setTossStep] = useState(0);
-  const [result, setResult] = useState<LiuYaoQuickResult | LiuYaoDeepResult | null>(null);
+  const [result, setResult] = useState<DoubaoLiuyaoResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState<string | null>(null);
 
@@ -189,6 +188,14 @@ export default function LiuYaoDivination() {
 
   const startToss = () => {
     if (!memberActive && dailyFreeUsed >= 1) return;
+    if (!question.trim()) {
+      setError(T.fillQuestion[lang]);
+      return;
+    }
+    if (!gender) {
+      setError(T.fillGender[lang]);
+      return;
+    }
     setError(null);
     setRateLimited(null);
     setResult(null);
@@ -247,25 +254,31 @@ export default function LiuYaoDivination() {
       const res = await fetch("/api/liuyao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, deep, lines }),
+        body: JSON.stringify({
+          question: question.trim(),
+          lines,
+          solarDate,
+          gender: gender || "未填",
+          category,
+          deep,
+        }),
       });
 
       if (res.status === 429 || res.status === 402) {
         const data = await res.json();
-        setRateLimited(data.error || "请静候时辰更替");
+        setRateLimited(data.error || data.errorEn || "Rate limited");
         setPhase("error");
         return;
       }
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Divination failed");
+        throw new Error(data.error || data.errorEn || "Divination failed");
       }
 
-      const data = await res.json();
+      const data: DoubaoLiuyaoResponse = await res.json();
       setResult(data);
       setPhase("done");
-      // Refresh profile to pick up updated daily count
       setProfile(getProfile());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -274,13 +287,11 @@ export default function LiuYaoDivination() {
   };
 
   const reset = () => {
-    // Refresh profile to get current daily count
     const p = getProfile();
     setProfile(p);
     const updatedCount = getDailyLiurenCount();
     const isMember = isMemberActive();
 
-    // If free user already used their daily limit, show limit state
     if (!isMember && updatedCount >= 1) {
       setPhase("limit");
     } else {
@@ -298,7 +309,7 @@ export default function LiuYaoDivination() {
     setProfile(getProfile());
   };
 
-  // ---- Limit state (free user, daily used) ----
+  // ---- Limit state ----
   if (phase === "limit") {
     return (
       <div className="mystic-card rounded-2xl p-8 text-center space-y-4">
@@ -306,41 +317,21 @@ export default function LiuYaoDivination() {
         <h3 className="text-xl font-bold text-white">
           {lang === "zh" ? "今日免费次数已用完" : "Today's Free Reading Used"}
         </h3>
-        <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
-          {T.upgradeDesc[lang]}
-        </p>
+        <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">{T.upgradeDesc[lang]}</p>
 
         <div className="grid grid-cols-2 gap-3 text-left max-w-md mx-auto mt-4">
           <div className="bg-mystic-800/50 rounded-xl p-3 text-xs space-y-1">
-            <p className="text-gray-400 font-medium">
-              {lang === "zh" ? "快速解卦（免费）" : "Quick Reading (Free)"}
-            </p>
-            <p className="text-gray-500">
-              {lang === "zh" ? "✓ 六爻排盘 + 解卦" : "✓ Full hexagram chart"}
-            </p>
-            <p className="text-gray-500">
-              {lang === "zh" ? "✓ 吉凶判断 + 应期" : "✓ Fortune verdict + timing"}
-            </p>
-            <p className="text-gray-500">
-              {lang === "zh" ? "✕ 每天仅1次" : "✕ 1 per day only"}
-            </p>
+            <p className="text-gray-400 font-medium">{lang === "zh" ? "快速解卦（免费）" : "Quick Reading (Free)"}</p>
+            <p className="text-gray-500">{lang === "zh" ? "✓ 六爻排盘 + 解卦" : "✓ Full hexagram chart"}</p>
+            <p className="text-gray-500">{lang === "zh" ? "✓ 吉凶判断 + 应期" : "✓ Fortune verdict + timing"}</p>
+            <p className="text-gray-500">{lang === "zh" ? "✕ 每天仅1次" : "✕ 1 per day only"}</p>
           </div>
           <div className="bg-gold-400/5 border border-gold-400/20 rounded-xl p-3 text-xs space-y-1">
-            <p className="text-gold-300 font-medium">
-              {lang === "zh" ? "深度解读（会员）" : "Deep Reading (Member)"}
-            </p>
-            <p className="text-gold-300/70">
-              {lang === "zh" ? "✓ 以上全部" : "✓ Everything above"}
-            </p>
-            <p className="text-gold-300/70">
-              {lang === "zh" ? "✓ AI 深度解读" : "✓ AI deep interpretation"}
-            </p>
-            <p className="text-gold-300/70">
-              {lang === "zh" ? "✓ 五行分析 + 行动建议" : "✓ Element analysis + advice"}
-            </p>
-            <p className="text-gold-300/70">
-              {lang === "zh" ? "✓ 无限使用" : "✓ Unlimited readings"}
-            </p>
+            <p className="text-gold-300 font-medium">{lang === "zh" ? "深度解读（会员）" : "Deep Reading (Member)"}</p>
+            <p className="text-gold-300/70">{lang === "zh" ? "✓ 以上全部" : "✓ Everything above"}</p>
+            <p className="text-gold-300/70">{lang === "zh" ? "✓ AI 深度解读" : "✓ AI deep interpretation"}</p>
+            <p className="text-gold-300/70">{lang === "zh" ? "✓ 五行分析 + 行动建议" : "✓ Element analysis + advice"}</p>
+            <p className="text-gold-300/70">{lang === "zh" ? "✓ 无限使用" : "✓ Unlimited readings"}</p>
           </div>
         </div>
 
@@ -361,9 +352,54 @@ export default function LiuYaoDivination() {
 
   return (
     <div className="space-y-6">
-      {/* Category selector */}
+      {/* Idle: inputs + toss button */}
       {phase === "idle" && (
         <>
+          {/* Question input */}
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500">{T.questionLabel[lang]}</label>
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder={T.questionPlaceholder[lang]}
+              maxLength={80}
+              className="w-full px-4 py-3 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-gold-400/40 transition-colors"
+            />
+          </div>
+
+          {/* Date + Gender row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500">{T.dateLabel[lang]}</label>
+              <input
+                type="date"
+                value={solarDate}
+                onChange={(e) => setSolarDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm focus:outline-none focus:border-gold-400/40 transition-colors"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500">{T.genderLabel[lang]}</label>
+              <div className="flex gap-1">
+                {(["男", "女"] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(gender === g ? null : g)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+                      gender === g
+                        ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
+                        : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50 border border-mystic-700"
+                    }`}
+                  >
+                    {g === "男" ? T.male[lang] : T.female[lang]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Category selector */}
           <div className="flex flex-wrap justify-center gap-2">
             {(Object.keys(T.categoryLabels) as QuestionCategory[]).map((c) => (
               <button
@@ -435,19 +471,18 @@ export default function LiuYaoDivination() {
         </div>
       )}
 
-      {/* Revealed — hexagram preview */}
+      {/* Revealed: hexagram preview */}
       {phase === "revealed" && (
         <div className="space-y-6">
           <div className="text-center">
             <p className="text-gold-300 font-medium mb-3">{T.hexagramReady[lang]}</p>
             <HexagramDisplay lines={lines} lang={lang} />
 
-            {/* Moving lines summary */}
             {lines.filter((l) => l.isMoving).length > 0 && (
               <p className="text-xs text-amber-400/70 mt-2">
-                {lang === "zh"
-                  ? `${lines.filter((l) => l.isMoving).length} 个动爻：${lines.filter((l) => l.isMoving).map((l) => T.lineLabel[l.position][lang]).join("、")}`
-                  : `${lines.filter((l) => l.isMoving).length} moving: ${lines.filter((l) => l.isMoving).map((l) => T.lineLabel[l.position].en).join(", ")}`}
+                {lines.filter((l) => l.isMoving).length}{T.movingCount[lang]}
+                {": "}
+                {lines.filter((l) => l.isMoving).map((l) => T.lineLabel[l.position][lang]).join(", ")}
               </p>
             )}
           </div>
@@ -502,33 +537,35 @@ export default function LiuYaoDivination() {
       {/* Result */}
       {phase === "done" && result && (
         <div className="space-y-6">
-          {/* Header with hexagram visual */}
+          {/* Header */}
           <div className="mystic-card rounded-2xl p-6 text-center space-y-4">
             <h3 className="text-2xl font-bold text-white">
-              {result.hexagramName}
+              {lang === "en" && result.hexagramNameEn ? result.hexagramNameEn : result.hexagramName}
               {result.changedHexagramName && (
-                <span className="text-gold-400"> {lang === "zh" ? "→" : "→"} {result.changedHexagramName}</span>
+                <span className="text-gold-400">
+                  {" → "}
+                  {lang === "en" && result.changedHexagramNameEn
+                    ? result.changedHexagramNameEn
+                    : result.changedHexagramName}
+                </span>
               )}
             </h3>
+            {/* Show both names if in Chinese mode for reference */}
+            {lang === "zh" && result.hexagramNameEn && (
+              <p className="text-xs text-gray-500">
+                {result.hexagramNameEn}
+                {result.changedHexagramNameEn && ` → ${result.changedHexagramNameEn}`}
+              </p>
+            )}
             <p className="text-gray-400 text-sm">
-              {result.palace}({result.palaceElement})
+              {lang === "en" && result.palaceEn ? result.palaceEn : result.palace}
+              ({lang === "en" && result.palaceElementEn ? result.palaceElementEn : result.palaceElement})
               {result.isJingGua
                 ? ` · ${T.staticHexagram[lang]}`
-                : ` · ${T.movingLines[lang]}`}
+                : ` · ${result.movingLineCount}${T.movingCount[lang]}`}
             </p>
 
-            {/* Hexagram lines visual */}
-            <HexagramDisplay lines={result.assembledLines} lang={lang} />
-
-            {/* Trigram info */}
-            <div className="flex justify-center gap-6 text-xs text-gray-500">
-              <span>
-                {T.trigramUpper[lang]}: {result.assembledLines.slice(3).map((l) => l.isYang ? "⚊" : "⚋").join("")}
-              </span>
-              <span>
-                {T.trigramLower[lang]}: {result.assembledLines.slice(0, 3).map((l) => l.isYang ? "⚊" : "⚋").join("")}
-              </span>
-            </div>
+            <HexagramDisplay lines={result.lines} lang={lang} />
           </div>
 
           {/* Six lines table */}
@@ -544,7 +581,7 @@ export default function LiuYaoDivination() {
               <span>{T.liushenLabel[lang]}</span>
               <span>{T.markersLabel[lang]}</span>
             </div>
-            {[...result.assembledLines].reverse().map((l) => (
+            {[...result.lines].reverse().map((l) => (
               <div
                 key={l.position}
                 className={`grid grid-cols-[2rem_2rem_2.5rem_3rem_4rem_3rem] gap-1 text-center items-center text-sm rounded-lg py-1.5 ${
@@ -559,23 +596,27 @@ export default function LiuYaoDivination() {
               >
                 <span className="text-gray-500 text-xs">{T.lineLabel[l.position]?.[lang] ?? `L${l.position}`}</span>
                 <LineSymbol line={l} />
-                <span className="text-gray-300 text-xs">{l.branch}</span>
+                <span className="text-gray-300 text-xs">
+                  {lang === "en" && l.branchElementEn ? `${l.branch}` : l.branch}
+                </span>
                 <span
                   className={`text-xs ${
-                    l.liuqin === "官鬼"
+                    l.liuqin === "官鬼" || l.liuqin === "Officer"
                       ? "text-red-400"
-                      : l.liuqin === "妻财"
+                      : l.liuqin === "妻财" || l.liuqin === "Wealth"
                       ? "text-green-400"
-                      : l.liuqin === "子孙"
+                      : l.liuqin === "子孙" || l.liuqin === "Children"
                       ? "text-blue-400"
-                      : l.liuqin === "兄弟"
+                      : l.liuqin === "兄弟" || l.liuqin === "Brothers"
                       ? "text-orange-400"
                       : "text-purple-400"
                   }`}
                 >
-                  {l.liuqin}
+                  {lang === "en" && l.liuqinEn ? l.liuqinEn : l.liuqin}
                 </span>
-                <span className="text-gray-500 text-xs">{l.liushen}</span>
+                <span className="text-gray-500 text-xs">
+                  {lang === "en" && l.liushenEn ? l.liushenEn : l.liushen}
+                </span>
                 <span className="text-xs flex justify-center gap-0.5">
                   {l.isShi && <span className="text-blue-400">{T.shi[lang]}</span>}
                   {l.isYing && <span className="text-green-400">{T.ying[lang]}</span>}
@@ -586,55 +627,89 @@ export default function LiuYaoDivination() {
 
           {/* Interpretation */}
           <div className="mystic-card rounded-2xl p-6 space-y-4">
-            {/* Plain-language interpretation (customer-friendly) */}
+            {/* Plain-language interpretation */}
             <div className="p-4 rounded-xl bg-gold-400/5 border border-gold-400/15">
-              <h4 className="text-sm text-gold-400 font-medium mb-2">
-                ✨ {T.plainLangTitle[lang]}
-              </h4>
-              <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">
-                {buildPlainInterpretation(result, lang)}
+              <p className="text-gray-200 text-sm leading-relaxed">
+                {lang === "en" && result.interpretationEn ? result.interpretationEn : result.interpretation}
               </p>
             </div>
 
-            {/* Technical interpretation */}
-            <details className="group">
-              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
-                {T.interpretationTitle[lang]}
-              </summary>
-              <pre className="text-gray-400 text-xs leading-relaxed whitespace-pre-wrap font-sans mt-2 p-3 rounded-lg bg-mystic-800/30">
-                {result.interpretation}
-              </pre>
-            </details>
+            {/* Fortune verdict */}
+            {(result.fortuneVerdict || result.fortuneVerdictEn) && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-mystic-800/30">
+                <span className="text-xs text-gray-500">{T.fortuneTitle[lang]}:</span>
+                <span className={`font-semibold text-sm ${
+                  (result.fortuneVerdictEn || result.fortuneVerdict).includes("Favorable") || result.fortuneVerdict.includes("吉")
+                    ? "text-green-400"
+                    : (result.fortuneVerdictEn || result.fortuneVerdict).includes("Unfavorable") || result.fortuneVerdict.includes("凶")
+                    ? "text-red-400"
+                    : "text-yellow-400"
+                }`}>
+                  {lang === "en" && result.fortuneVerdictEn ? result.fortuneVerdictEn : result.fortuneVerdict}
+                </span>
+              </div>
+            )}
 
-            {/* AI deep interpretation */}
-            {"aiInterpretation" in result && result.aiInterpretation && (
+            {/* Timing */}
+            {(result.timingPrediction || result.timingPredictionEn) && (
+              <div className="p-3 rounded-xl bg-mystic-800/30">
+                <p className="text-xs text-gray-500 mb-1">{T.timingTitle[lang]}</p>
+                <p className="text-gray-300 text-sm">
+                  {lang === "en" && result.timingPredictionEn ? result.timingPredictionEn : result.timingPrediction}
+                </p>
+              </div>
+            )}
+
+            {/* Deep interpretation sections */}
+            {result.level === "deep" && (
               <>
                 <hr className="border-mystic-700" />
-                <div className="space-y-3">
-                  <h4 className="text-gold-400 font-medium">✨ Clara {lang === "zh" ? "深度解读" : "Deep Reading"}</h4>
-                  <p className="text-gray-200 leading-relaxed">{result.aiInterpretation}</p>
-                  {result.elementAnalysis && (
-                    <div className="p-3 rounded-xl bg-mystic-800/50">
-                      <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">
-                        {lang === "zh" ? "五行分析" : "Element Analysis"}
-                      </p>
-                      <p className="text-gray-300 text-sm">{result.elementAnalysis}</p>
-                    </div>
-                  )}
-                  {result.actionAdvice && (
-                    <div className="p-3 rounded-xl bg-gold-400/5 border border-gold-400/20">
-                      <p className="text-xs text-gold-400 uppercase tracking-widest mb-1">
-                        {lang === "zh" ? "行动建议" : "Action Advice"}
-                      </p>
-                      <p className="text-gray-300 text-sm">{result.actionAdvice}</p>
-                    </div>
-                  )}
-                </div>
+                <h4 className="text-gold-400 font-medium">✨ {T.claraReading[lang]}</h4>
+
+                {/* Yong Shen */}
+                {(result.yongShen || result.yongShenEn) && (
+                  <div className="p-3 rounded-xl bg-mystic-800/30">
+                    <p className="text-xs text-gray-500 mb-1">{T.yongShenTitle[lang]}</p>
+                    <p className="text-gray-300 text-sm">
+                      {lang === "en" && result.yongShenEn ? result.yongShenEn : result.yongShen}
+                      {(result.yongShenStrength || result.yongShenStrengthEn) && (
+                        <span className="text-gray-500">
+                          {" — "}
+                          {lang === "en" && result.yongShenStrengthEn
+                            ? result.yongShenStrengthEn
+                            : result.yongShenStrength}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {/* Moving line effects */}
+                {(result.movingLineEffects || result.movingLineEffectsEn) && (
+                  <div className="p-3 rounded-xl bg-mystic-800/30">
+                    <p className="text-xs text-gray-500 mb-1">{T.movingLines[lang]}</p>
+                    <p className="text-gray-300 text-sm">
+                      {lang === "en" && result.movingLineEffectsEn
+                        ? result.movingLineEffectsEn
+                        : result.movingLineEffects}
+                    </p>
+                  </div>
+                )}
+
+                {/* Action advice */}
+                {(result.actionAdvice || result.actionAdviceEn) && (
+                  <div className="p-3 rounded-xl bg-gold-400/5 border border-gold-400/20">
+                    <p className="text-xs text-gold-400 font-medium mb-1">{T.actionAdviceTitle[lang]}</p>
+                    <p className="text-gray-300 text-sm">
+                      {lang === "en" && result.actionAdviceEn ? result.actionAdviceEn : result.actionAdvice}
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </div>
 
-          {/* Free tier upsell after quick reading */}
+          {/* Free tier upsell */}
           {!memberActive && (
             <div className="p-4 rounded-xl bg-gold-400/5 border border-gold-400/15 text-center space-y-2">
               <p className="text-xs text-gray-400">{T.freeTierUpsell[lang]}</p>
@@ -647,7 +722,7 @@ export default function LiuYaoDivination() {
             </div>
           )}
 
-          {/* 再卜一卦 / Ask Another */}
+          {/* Ask another */}
           <button
             onClick={reset}
             className="block mx-auto text-sm text-gold-400 hover:text-gold-300 underline underline-offset-4"

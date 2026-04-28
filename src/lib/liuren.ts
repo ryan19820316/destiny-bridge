@@ -1,3 +1,4 @@
+/** @deprecated Xiao Liu Ren calculation moved to Doubao API. See src/lib/liuren-prompt.ts */
 import { Solar, Lunar } from "lunar-typescript";
 import { LiurenPalaceData, LiurenDivination } from "@/types";
 

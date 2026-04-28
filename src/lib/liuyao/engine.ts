@@ -1,3 +1,4 @@
+/** @deprecated Liu Yao 装卦 moved to Doubao API. See src/lib/liuyao-prompt.ts */
 import type { Stem, Branch, Element } from "@/types";
 import {
   CoinTossLine,

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     let dailyGuidance = null;
     let error = null;
 
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (process.env.DOUBAO_API_KEY || process.env.ANTHROPIC_API_KEY) {
       try {
         dailyGuidance = await generateDailyGuidance(chartText, targetDate);
       } catch (e) {

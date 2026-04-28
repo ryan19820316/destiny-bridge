@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.DOUBAO_API_KEY && !process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
         { error: "AI service is not configured" },
         { status: 503 }

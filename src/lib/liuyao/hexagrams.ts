@@ -1,3 +1,4 @@
+/** @deprecated Hexagram lookup moved to Doubao API. See src/lib/liuyao-prompt.ts */
 import { HexagramData, PalaceElement, Trigram } from "./types";
 
 // Binary string: index 0 = 初爻 (bottom), index 5 = 上爻 (top)

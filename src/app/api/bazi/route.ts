@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     let wellnessReport = null;
     let aiError = null;
 
-    if (generateAI && process.env.ANTHROPIC_API_KEY) {
+    if (generateAI && (process.env.DOUBAO_API_KEY || process.env.ANTHROPIC_API_KEY)) {
       try {
         const chartText = formatChartForAI(baziResult, birthData);
         wellnessReport = await generateWellnessReport(chartText, birthData);
