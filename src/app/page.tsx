@@ -12,6 +12,7 @@ import VentChat from "@/components/VentChat";
 import PricingSection from "@/components/PricingSection";
 import ShopSection from "@/components/ShopSection";
 import XiaoLiuRen from "@/components/XiaoLiuRen";
+import LiuYaoDivination from "@/components/LiuYaoDivination";
 import Footer from "@/components/Footer";
 
 const ELEMENT_EMOJI: Record<string, string> = {
@@ -111,7 +112,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"daily" | "vent" | "liuren">("daily");
+  const [activeTab, setActiveTab] = useState<"daily" | "vent" | "liuren" | "liuyao">("daily");
 
   const handleSubmit = async (data: BirthData) => {
     setLoading(true);
@@ -248,6 +249,7 @@ export default function Home() {
             { id: "daily", label: "Daily Guide", emoji: "📅" },
             { id: "vent", label: "Vent to Clara", emoji: "🍵" },
             { id: "liuren", label: "小六壬 Divination", emoji: "🔮" },
+            { id: "liuyao", label: "六爻 I Ching", emoji: "☯️" },
           ] as const).map((tab) => (
             <button
               key={tab.id}
@@ -269,6 +271,7 @@ export default function Home() {
           {activeTab === "daily" && <DailyGuidanceCard birthData={birthData} />}
           {activeTab === "vent" && <VentChat />}
           {activeTab === "liuren" && <XiaoLiuRen />}
+          {activeTab === "liuyao" && <LiuYaoDivination />}
         </div>
       </section>
 
