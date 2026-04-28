@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getProfile, isMemberActive, getDailyLiurenCount } from "@/lib/profile";
+import { getProfile, isMemberActive, getDailyLiurenCount, incrementLiurenCount } from "@/lib/profile";
 import type { UserProfile } from "@/types";
 import type {
   CoinTossLine,
@@ -88,6 +88,18 @@ export default function LiuYaoDivination() {
 
   const handleQuery = async (deep: boolean) => {
     if (phase === "loading") return;
+
+    // Client-side daily limit check for free users
+    if (!memberActive) {
+      const dailyCount = getDailyLiurenCount();
+      if (dailyCount >= 1) {
+        setRateLimited("今日免费占卜次数已用完。升级会员享受无限深度解读。");
+        setPhase("error");
+        return;
+      }
+      incrementLiurenCount();
+    }
+
     setPhase("loading");
     setError(null);
 
@@ -95,10 +107,10 @@ export default function LiuYaoDivination() {
       const res = await fetch("/api/liuyao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, deep }),
+        body: JSON.stringify({ category, deep, lines }),
       });
 
-      if (res.status === 429) {
+      if (res.status === 429 || res.status === 402) {
         const data = await res.json();
         setRateLimited(data.error || "请静候时辰更替");
         setPhase("error");
@@ -128,10 +140,6 @@ export default function LiuYaoDivination() {
     setRateLimited(null);
   };
 
-  // Trigrams from lines
-  const upperLines = lines.filter((l) => l.position >= 4);
-  const lowerLines = lines.filter((l) => l.position <= 3);
-
   return (
     <div className="space-y-6">
       {/* Category selector */}
@@ -157,14 +165,23 @@ export default function LiuYaoDivination() {
             <p className="text-gray-400 text-sm">
               心中默念所求之事，然后摇动铜钱
             </p>
-            {!memberActive && (
-              <p className="text-xs text-gold-400/70">
-                免费用户每日 1 次快速占卜 · 会员无限深度解读
+            {!memberActive && dailyFreeUsed >= 1 ? (
+              <p className="text-xs text-amber-400/80">
+                今日免费占卜次数已用完。升级会员享受无限深度解读。
               </p>
+            ) : (
+              !memberActive && (
+                <p className="text-xs text-gold-400/70">
+                  免费用户每日 1 次快速占卜 · 会员无限深度解读
+                </p>
+              )
             )}
             <button
               onClick={startToss}
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg"
+              disabled={!memberActive && dailyFreeUsed >= 1}
+              className={`px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg ${
+                !memberActive && dailyFreeUsed >= 1 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               🪙 摇铜钱起卦
             </button>

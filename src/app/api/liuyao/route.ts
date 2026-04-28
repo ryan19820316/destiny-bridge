@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { interpret } from "@/lib/liuyao/interpreter";
 import { buildDivination } from "@/lib/liuyao/engine";
-import { getProfile, isMemberActive, canQueryLiuren } from "@/lib/profile";
+import {
+  getProfile,
+  isMemberActive,
+  getDailyLiurenCount,
+  incrementLiurenCount,
+} from "@/lib/profile";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import type { QuestionCategory } from "@/lib/liuyao/types";
+import type { QuestionCategory, CoinTossLine } from "@/lib/liuyao/types";
 
 function getEnv(key: string, fallback = ""): string {
   try {
@@ -57,13 +62,17 @@ export async function POST(req: NextRequest) {
     const profile = getProfile();
     const memberActive = isMemberActive();
 
-    // Anti-abuse: use same mechanism as Xiao Liu Ren
-    const hourIndex = (new Date().getHours()) % 12;
-    if (!canQueryLiuren(category as "love" | "family" | "health" | "career" | "daily", hourIndex)) {
-      return NextResponse.json({
-        error: "同一时辰此事已卜过，请静候时辰更替后再问。",
-        nextAvailable: `Next 时辰: ${hourIndex + 1 > 11 ? 0 : hourIndex + 1}`,
-      }, { status: 429 });
+    // Free tier: check daily limit (shared with Xiao Liu Ren — 1 free divination/day total)
+    if (!memberActive) {
+      const dailyCount = getDailyLiurenCount();
+      if (dailyCount >= 1) {
+        return NextResponse.json({
+          error: "今日免费占卜次数已用完。升级会员享受无限深度解读。",
+          limited: true,
+          dailyFreeUsed: dailyCount,
+        }, { status: 429 });
+      }
+      incrementLiurenCount();
     }
 
     // Free tier: no deep reading
@@ -71,11 +80,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         error: "深度解读需要会员。免费用户可使用快速解读。",
         limited: true,
-      });
+      }, { status: 402 });
     }
 
-    // Build divination
-    const result = buildDivination();
+    // Use client-provided lines if available, otherwise toss fresh
+    const clientLines: CoinTossLine[] | undefined = body.lines;
+    const result = buildDivination(clientLines);
     const quickResult = interpret({ result, questionCategory: category });
 
     // Deep reading with AI
