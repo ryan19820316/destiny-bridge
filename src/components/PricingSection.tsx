@@ -1,6 +1,6 @@
 "use client";
 
-import { createLemonSqueezyCheckout, PRICING } from "@/lib/payment";
+import { createGumroadCheckout, PRICING } from "@/lib/payment";
 import { isMemberActive } from "@/lib/profile";
 
 export default function PricingSection() {
@@ -25,12 +25,12 @@ export default function PricingSection() {
             <div className="inline-block px-3 py-1 rounded-full bg-gold-400/20 text-gold-300 text-xs font-medium mb-3 self-start">
               One-Time Purchase
             </div>
-            <h3 className="text-xl font-bold text-white">{PRICING.baziTest.name}</h3>
+            <h3 className="text-xl font-bold text-white">{PRICING.baziBlueprint.name}</h3>
             <p className="text-xs text-gray-400 mt-1 mb-5">
               Your energetic foundation — know your blueprint
             </p>
             <div className="mb-6">
-              <span className="text-3xl font-bold gold-text">${PRICING.baziTest.price}</span>
+              <span className="text-3xl font-bold gold-text">${PRICING.baziBlueprint.price}</span>
               <span className="text-gray-400 ml-1">once</span>
             </div>
             <ul className="space-y-2.5 mb-8 flex-1">
@@ -89,7 +89,7 @@ export default function PricingSection() {
               ))}
             </ul>
             <a
-              href={`${createLemonSqueezyCheckout(PRICING.claraMembership.variantId)}`}
+              href={`${createGumroadCheckout(PRICING.claraMembership.permalink)}`}
               className="block text-center py-3.5 px-6 rounded-2xl font-semibold transition-all mt-auto bg-cream-100 text-mystic-950 hover:bg-cream-200 shadow-md"
             >
               {memberActive ? "Manage Membership" : "Start Free Trial"}
@@ -98,7 +98,7 @@ export default function PricingSection() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-8 max-w-lg mx-auto leading-relaxed">
-          Payments processed securely via Lemon Squeezy. Cancel anytime.
+          Payments processed securely via Gumroad. Cancel anytime.
           All readings are for personal wellness guidance and entertainment.
           Not medical or psychological advice.
         </p>

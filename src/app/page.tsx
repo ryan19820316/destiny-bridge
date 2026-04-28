@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BaziResult, BirthData } from "@/types";
 import { updateProfile } from "@/lib/profile";
+import { savePendingPurchase, createGumroadCheckout, PRICING } from "@/lib/payment";
 import Hero from "@/components/Hero";
 import BaziForm from "@/components/BaziForm";
 import WellnessReport from "@/components/WellnessReport";
@@ -145,34 +146,10 @@ export default function Home() {
     }
   };
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = () => {
     if (!birthData) return;
-    setAiLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/bazi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...birthData, generateAI: true }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Something went wrong");
-      }
-      const baziResult: BaziResult = await res.json();
-      setResult(baziResult);
-      setTimeout(() => {
-        document.getElementById("result-section")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 200);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "AI report generation failed");
-    } finally {
-      setAiLoading(false);
-    }
+    savePendingPurchase({ birthData });
+    window.location.href = createGumroadCheckout(PRICING.baziBlueprint.permalink);
   };
 
   return (

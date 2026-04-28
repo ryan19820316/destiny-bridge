@@ -1,24 +1,34 @@
-export function createLemonSqueezyCheckout(variantId: string, email?: string) {
-  const storeId = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID;
-  const baseUrl = `https://${storeId}.lemonsqueezy.com/checkout/buy/${variantId}`;
-
-  const params = new URLSearchParams();
-  if (email) params.set("checkout[email]", email);
-  params.set("embed", "0");
-
-  return `${baseUrl}?${params.toString()}`;
+export function createGumroadCheckout(productPermalink: string) {
+  return `https://gumroad.com/l/${productPermalink}`;
 }
 
 export const PRICING = {
-  baziTest: {
-    variantId: "bazi-test",
+  baziBlueprint: {
+    permalink: "bazi-wellness-blueprint",
     price: 9.99,
     name: "Bazi Wellness Blueprint",
+    type: "one-time" as const,
   },
   claraMembership: {
-    variantId: "clara-monthly",
+    permalink: "clara-membership",
     price: 6.99,
     name: "Clara Membership",
+    type: "subscription" as const,
     trialDays: 7,
   },
 };
+
+export function savePendingPurchase(data: Record<string, unknown>) {
+  localStorage.setItem("pendingPurchase", JSON.stringify(data));
+}
+
+export function getPendingPurchase<T = Record<string, unknown>>(): T | null {
+  const raw = localStorage.getItem("pendingPurchase");
+  if (!raw) return null;
+  localStorage.removeItem("pendingPurchase");
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
