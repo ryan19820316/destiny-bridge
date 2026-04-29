@@ -28,7 +28,7 @@ export async function callDoubao(
 ): Promise<string> {
   const apiKey = getEnv("DOUBAO_API_KEY");
   if (!apiKey) throw new Error("DOUBAO_API_KEY is not configured");
-  const baseUrl = getEnv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com");
+  const baseUrl = getEnv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3");
   const model = getEnv("DOUBAO_MODEL", "doubao-pro-32k");
 
   const body: Record<string, unknown> = {
@@ -45,7 +45,7 @@ export async function callDoubao(
     body.response_format = options.response_format;
   }
 
-  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
