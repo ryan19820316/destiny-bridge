@@ -2,18 +2,18 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://destiny-bridge-produ
 
 export function createGumroadCheckout(productPermalink: string, type: "bazi" | "member") {
   const redirectUrl = encodeURIComponent(`${APP_URL}/payment/success?type=${type}`);
-  return `https://gumroad.com/l/${productPermalink}?wanted=true&url=${redirectUrl}`;
+  return `https://3128796303152.gumroad.com/l/${productPermalink}?wanted=true&url=${redirectUrl}`;
 }
 
 export const PRICING = {
   baziBlueprint: {
-    permalink: "bazi-wellness-blueprint",
+    permalink: "otmcrc",
     price: 9.99,
     name: "Bazi Wellness Blueprint",
     type: "one-time" as const,
   },
   claraMembership: {
-    permalink: "clara-membership",
+    permalink: "wctwo",
     price: 6.99,
     name: "Clara Membership",
     type: "subscription" as const,
