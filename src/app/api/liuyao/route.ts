@@ -91,7 +91,6 @@ export async function POST(req: NextRequest) {
     const content = await callDoubao(systemPrompt, userMessage, {
       temperature: 0.7,
       max_tokens: maxTokens,
-,
     });
 
     const jsonStr = parseJsonFromLLM(content);

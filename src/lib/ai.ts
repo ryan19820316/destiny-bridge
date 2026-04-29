@@ -262,7 +262,7 @@ export async function generateLiurenQuick(
       timeHHMM: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
       category,
     }),
-    { temperature: 0.7, max_tokens: 500, response_format: { type: "json_object" } }
+    { temperature: 0.7, max_tokens: 500 }
   );
 
   try {
@@ -296,7 +296,7 @@ export async function generateLiurenDeep(
       timeHHMM: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
       category,
     }),
-    { temperature: 0.8, max_tokens: 1500, response_format: { type: "json_object" } }
+    { temperature: 0.8, max_tokens: 1500 }
   );
 
   try {
