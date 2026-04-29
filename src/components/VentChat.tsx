@@ -1,8 +1,24 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { getProfile, addChatMessage, clearDailyChatHistory, isMemberActive, startFreeTrial, updateProfile } from "@/lib/profile";
+import { getProfile, addChatMessage, clearDailyChatHistory } from "@/lib/profile";
 import type { VentMessage, VentResponse, UserProfile } from "@/types";
+
+type Lang = "zh" | "en";
+
+const T = {
+  loading: { zh: "加载中…", en: "Loading your profile..." },
+  title: { zh: "向 Clara 倾诉", en: "Talk to Clara" },
+  subtitle: { zh: "把今天的心事告诉 Clara，她用东方智慧帮你梳理情绪。没有评判，只有温暖。", en: "Sometimes you just need someone who listens. Clara uses Eastern wisdom to help you make sense of hard days — no judgment, just warmth." },
+  privacyNote: { zh: "你的对话仅保存在你的设备上。这是身心健康指引，不是心理治疗。", en: "Your conversations stay on your device. This is wellness guidance, not therapy." },
+  companion: { zh: "你的东方生活陪伴", en: "Your Eastern wellness companion" },
+  clearChat: { zh: "清除今日对话", en: "Clear today's chat" },
+  emptyHint: { zh: "今天想和 Clara 聊些什么呢…", en: "Tell Clara what's on your mind today..." },
+  emptyPrivacy: { zh: "你的对话仅保存在你的设备上。", en: "Your words stay on your device only." },
+  listening: { zh: "Clara 正在倾听…", en: "Clara is listening..." },
+  placeholder: { zh: "和 Clara 说说你的心事…", en: "Tell Clara what's on your mind..." },
+  send: { zh: "发送", en: "Send" },
+};
 
 export default function VentChat() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -10,19 +26,19 @@ export default function VentChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lang, setLang] = useState<Lang>("en");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const p = getProfile();
     setProfile(p);
     setMessages(p.conversationHistory || []);
+    setLang(p.languagePreference === "en" ? "en" : "zh");
   }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  const memberActive = profile ? isMemberActive() : false;
 
   const handleSend = async () => {
     if (!input.trim() || loading || !profile) return;
@@ -75,12 +91,6 @@ export default function VentChat() {
     setMessages([]);
   };
 
-  const handleStartTrial = () => {
-    startFreeTrial();
-    const p = getProfile();
-    setProfile(p);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -91,29 +101,7 @@ export default function VentChat() {
   if (!profile) {
     return (
       <div className="mystic-card rounded-2xl p-8 text-center">
-        <p className="text-gray-400 text-sm">Loading your profile...</p>
-      </div>
-    );
-  }
-
-  if (!memberActive) {
-    return (
-      <div className="mystic-card rounded-2xl p-8 text-center space-y-4">
-        <div className="text-4xl">🍵</div>
-        <h3 className="text-xl font-bold text-white">Talk to Clara</h3>
-        <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
-          Sometimes you just need someone who listens. Clara uses Eastern wisdom to help you make sense of hard days — no judgment, just warmth.
-        </p>
-        <p className="text-xs text-gray-500">
-          Your words stay on your device. Clara never sees them — only the AI responds, then forgets.
-        </p>
-        <button
-          onClick={handleStartTrial}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-sm hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg"
-        >
-          Start 7-Day Free Trial
-        </button>
-        <p className="text-xs text-gray-500">Then $6.99/month. Cancel anytime.</p>
+        <p className="text-gray-400 text-sm">{T.loading[lang]}</p>
       </div>
     );
   }
@@ -127,14 +115,14 @@ export default function VentChat() {
         </div>
         <div>
           <h3 className="font-semibold text-white text-sm">Clara</h3>
-          <p className="text-xs text-gray-500">Your Eastern wellness companion</p>
+          <p className="text-xs text-gray-500">{T.companion[lang]}</p>
         </div>
         <button
           onClick={handleClearChat}
           className="ml-auto text-xs text-gray-500 hover:text-red-400 transition-colors"
-          title="Clear today's chat"
+          title={lang === "zh" ? "清除今日对话" : "Clear today's chat"}
         >
-          Clear today&rsquo;s chat
+          {T.clearChat[lang]}
         </button>
       </div>
 
@@ -142,12 +130,8 @@ export default function VentChat() {
       <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-3">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-400">
-              Tell Clara what&rsquo;s on your mind today...
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Your words stay on your device only.
-            </p>
+            <p className="text-sm text-gray-400">{T.emptyHint[lang]}</p>
+            <p className="text-xs text-gray-500 mt-1">{T.emptyPrivacy[lang]}</p>
           </div>
         )}
         {messages.map((msg, i) => (
@@ -167,7 +151,7 @@ export default function VentChat() {
         {loading && (
           <div className="flex justify-start">
             <div className="clara-bubble px-4 py-2.5 text-sm text-gray-400 italic">
-              Clara is listening...
+              {T.listening[lang]}
             </div>
           </div>
         )}
@@ -184,7 +168,7 @@ export default function VentChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Tell Clara what's on your mind..."
+          placeholder={T.placeholder[lang]}
           className="flex-1 px-4 py-3 rounded-xl bg-mystic-800/80 border border-mystic-600 text-white placeholder:text-gray-500 focus:outline-none focus:border-gold-400 transition-colors text-sm"
           disabled={loading}
         />
@@ -193,13 +177,13 @@ export default function VentChat() {
           disabled={loading || !input.trim()}
           className="px-5 py-3 rounded-xl bg-mystic-700 text-white font-medium text-sm hover:bg-mystic-600 disabled:opacity-40 transition-all shrink-0"
         >
-          Send
+          {T.send[lang]}
         </button>
       </div>
 
       {/* Privacy notice */}
       <p className="text-xs text-gray-600 text-center mt-2 shrink-0">
-        Your conversations stay on your device. Cleared daily. This is wellness guidance, not therapy.
+        {T.privacyNote[lang]}
       </p>
     </div>
   );

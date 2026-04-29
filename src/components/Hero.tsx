@@ -1,6 +1,41 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { getProfile } from "@/lib/profile";
+
+type Lang = "zh" | "en";
+
+const T = {
+  badge: { zh: "东方智慧 · 现代生活", en: "Eastern Wellness for Modern Life" },
+  heading: { zh: "你的", en: "Your" },
+  headingHighlight: { zh: "专属生活指南", en: "Wellness Guide" },
+  subtitle1: {
+    zh: "古老易经智慧 × 人工智能，为你的衣食住行、工作、婚姻、养生提供贴心指引。",
+    en: "Ancient I Ching wisdom meets AI — personalized guidance for every aspect of modern life.",
+  },
+  subtitle2: {
+    zh: "让神秘的东方智慧，科学地贴近你的日常生活。",
+    en: "Eastern wisdom, grounded in science, woven into your daily life.",
+  },
+  cta: {
+    zh: "用易经开启你人生的第一卦 →",
+    en: "Cast Your First Hexagram →",
+  },
+  trust: { zh: "私密 · 个人 · 只为你", en: "Private · Personal · For You Only" },
+  trustNote: {
+    zh: "你的个人信息不会离开你的设备。",
+    en: "Your personal information never leaves your device.",
+  },
+};
+
 export default function Hero() {
+  const [lang, setLang] = useState<Lang>("en");
+
+  useEffect(() => {
+    const p = getProfile();
+    setLang(p.languagePreference === "en" ? "en" : "zh");
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background decoration */}
@@ -19,25 +54,22 @@ export default function Hero() {
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold-400/30 bg-mystic-800/50 mb-8 animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
           <span className="text-gold-300 text-sm font-medium">
-            Eastern Wellness for Modern Life
+            {T.badge[lang]}
           </span>
         </div>
 
         {/* Main heading */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 animate-fade-in">
-          Your <span className="gold-text">Wellness Guide</span>
+          {T.heading[lang]}{" "}
+          <span className="gold-text">{T.headingHighlight[lang]}</span>
         </h1>
 
         <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-4 animate-fade-in-delay-1 leading-relaxed">
-          古老易经智慧 × 人工智能，为你的衣食住行、工作、婚姻、养生提供贴心指引。
-        </p>
-
-        <p className="text-sm text-gray-400 max-w-lg mx-auto mb-3 animate-fade-in-delay-1">
-          Ancient I Ching wisdom meets AI — personalized guidance for every aspect of modern life.
+          {T.subtitle1[lang]}
         </p>
 
         <p className="text-sm text-gray-400 max-w-lg mx-auto mb-10 animate-fade-in-delay-1">
-          让神秘的东方智慧，科学地贴近你的日常生活。
+          {T.subtitle2[lang]}
         </p>
 
         {/* CTA */}
@@ -46,7 +78,7 @@ export default function Hero() {
             href="#divination"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 shadow-lg hover:shadow-gold-400/25"
           >
-            用易经开启你人生的第一卦 →
+            {T.cta[lang]}
           </a>
         </div>
 
@@ -54,10 +86,10 @@ export default function Hero() {
         <div className="mt-10 flex flex-col items-center gap-2 text-sm text-gray-400 animate-fade-in-delay-2">
           <div className="flex items-center gap-1.5">
             <span className="text-gold-400">☯️</span>
-            <span>私密 · 个人 · 只为你</span>
+            <span>{T.trust[lang]}</span>
           </div>
           <p className="text-xs text-gray-500">
-            你的个人信息不会离开你的设备。
+            {T.trustNote[lang]}
           </p>
         </div>
 

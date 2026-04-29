@@ -3,12 +3,32 @@
 import { BirthData } from "@/types";
 import { useState } from "react";
 
+type Lang = "zh" | "en";
+
 interface Props {
   onSubmit: (data: BirthData) => void;
   loading: boolean;
+  lang: Lang;
 }
 
-export default function BaziForm({ onSubmit, loading }: Props) {
+const T = {
+  gender: { zh: "性别", en: "Gender" },
+  male: { zh: "♂ 男", en: "♂ Male" },
+  female: { zh: "♀ 女", en: "♀ Female" },
+  year: { zh: "年", en: "Year" },
+  month: { zh: "月", en: "Month" },
+  day: { zh: "日", en: "Day" },
+  hour: { zh: "时 (0-23)", en: "Hour (0-23)" },
+  hourHint: { zh: "24小时制", en: "24h" },
+  hint: {
+    zh: "请输入你的出生时间（本地时间），系统会自动转换为八字计算所需的农历时间。",
+    en: "Enter your local birth time. We adjust it for Ba Zi calculation.",
+  },
+  consulting: { zh: "正在排盘…", en: "Consulting the Oracle..." },
+  reveal: { zh: "查看我的命盘 →", en: "Reveal Your Blueprint →" },
+};
+
+export default function BaziForm({ onSubmit, loading, lang }: Props) {
   const [year, setYear] = useState(1990);
   const [month, setMonth] = useState(1);
   const [day, setDay] = useState(1);
@@ -18,10 +38,18 @@ export default function BaziForm({ onSubmit, loading }: Props) {
 
   const validate = (): boolean => {
     const errs: string[] = [];
-    if (year < 1900 || year > 2100) errs.push("Year must be between 1900 and 2100");
-    if (month < 1 || month > 12) errs.push("Month must be between 1 and 12");
-    if (day < 1 || day > 31) errs.push("Day must be between 1 and 31");
-    if (hour < 0 || hour > 23) errs.push("Hour must be between 0 and 23");
+    if (year < 1900 || year > 2100) errs.push(
+      lang === "zh" ? "年份需在 1900 到 2100 之间" : "Year must be between 1900 and 2100"
+    );
+    if (month < 1 || month > 12) errs.push(
+      lang === "zh" ? "月份需在 1 到 12 之间" : "Month must be between 1 and 12"
+    );
+    if (day < 1 || day > 31) errs.push(
+      lang === "zh" ? "日期需在 1 到 31 之间" : "Day must be between 1 and 31"
+    );
+    if (hour < 0 || hour > 23) errs.push(
+      lang === "zh" ? "小时需在 0 到 23 之间" : "Hour must be between 0 and 23"
+    );
     setErrors(errs);
     return errs.length === 0;
   };
@@ -38,7 +66,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
+        <label className="block text-sm font-medium text-gray-300 mb-2">{T.gender[lang]}</label>
         <div className="flex gap-3">
           <button
             type="button"
@@ -49,7 +77,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
                 : "border-mystic-600 bg-mystic-800/50 text-gray-400 hover:border-mystic-500"
             }`}
           >
-            ♂ Male
+            {T.male[lang]}
           </button>
           <button
             type="button"
@@ -60,14 +88,14 @@ export default function BaziForm({ onSubmit, loading }: Props) {
                 : "border-mystic-600 bg-mystic-800/50 text-gray-400 hover:border-mystic-500"
             }`}
           >
-            ♀ Female
+            {T.female[lang]}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Year</label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">{T.year[lang]}</label>
           <input
             type="number"
             value={year}
@@ -79,7 +107,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Month</label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">{T.month[lang]}</label>
           <select
             value={month}
             onChange={(e) => {
@@ -97,7 +125,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Day</label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">{T.day[lang]}</label>
           <select
             value={day}
             onChange={(e) => setDay(Number(e.target.value))}
@@ -112,8 +140,8 @@ export default function BaziForm({ onSubmit, loading }: Props) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Hour (0-23)
-            <span className="text-gray-500 ml-1 text-xs">24h</span>
+            {T.hour[lang]}
+            <span className="text-gray-500 ml-1 text-xs">{T.hourHint[lang]}</span>
           </label>
           <select
             value={hour}
@@ -129,9 +157,7 @@ export default function BaziForm({ onSubmit, loading }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-gray-500">
-        Enter your local birth time. We adjust it for Ba Zi calculation.
-      </p>
+      <p className="text-xs text-gray-500">{T.hint[lang]}</p>
 
       {errors.length > 0 && (
         <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30">
@@ -152,10 +178,10 @@ export default function BaziForm({ onSubmit, loading }: Props) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Consulting the Oracle...
+            {T.consulting[lang]}
           </span>
         ) : (
-          "Reveal Your Blueprint →"
+          T.reveal[lang]
         )}
       </button>
     </form>
