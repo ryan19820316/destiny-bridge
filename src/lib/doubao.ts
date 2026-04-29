@@ -1,17 +1,4 @@
-import { readFileSync } from "fs";
-import { resolve } from "path";
-
 function getEnv(key: string, fallback = ""): string {
-  try {
-    const envPath = resolve(process.cwd(), ".env.local");
-    const content = readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith(`${key}=`)) {
-        return trimmed.slice(key.length + 1).trim();
-      }
-    }
-  } catch {}
   return process.env[key] || fallback;
 }
 
