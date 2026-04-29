@@ -32,6 +32,11 @@ const T = {
   linesTitle: { zh: "六爻排盘", en: "Six Lines" },
   fillQuestion: { zh: "请先填写你的占事", en: "Please enter your question first" },
   fillGender: { zh: "请选择性别", en: "Please select your gender" },
+  fillBirth: { zh: "请填写出生日期", en: "Please enter your birth date" },
+  birthYearLabel: { zh: "出生年", en: "Birth Year" },
+  birthMonthLabel: { zh: "月", en: "Month" },
+  birthDayLabel: { zh: "日", en: "Day" },
+  birthHint: { zh: "用于八字排盘，结合六爻给出更个性化解读", en: "Used for Ba Zi chart — gives you a more personalized reading" },
   ceremonyTitle: { zh: "掷币仪式", en: "Coin Ritual" },
   ceremonyText: {
     zh: "为了保证准确性，请静心认真默想要占卜的事项，认真完成每一次的掷硬币。硬币越古老越好。请准备三枚相同的硬币，静心默想你的问题后，掷下硬币，根据三枚硬币的正背面分布，选择对应的爻象。",
@@ -225,6 +230,9 @@ export default function LiuYaoDivination() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [question, setQuestion] = useState("");
   const [gender, setGender] = useState<"男" | "女" | null>(null);
+  const [birthYear, setBirthYear] = useState(1990);
+  const [birthMonth, setBirthMonth] = useState(1);
+  const [birthDay, setBirthDay] = useState(1);
   const [phase, setPhase] = useState<Phase>("idle");
   const [lines, setLines] = useState<CoinTossLine[]>([]);
   const [tossStep, setTossStep] = useState(0);
@@ -234,7 +242,13 @@ export default function LiuYaoDivination() {
   const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
-    setProfile(getProfile());
+    const p = getProfile();
+    setProfile(p);
+    if (p.baziData) {
+      setBirthYear(p.baziData.year);
+      setBirthMonth(p.baziData.month);
+      setBirthDay(p.baziData.day);
+    }
   }, []);
 
   const lang: Lang = profile?.languagePreference === "en" ? "en" : "zh";
@@ -246,6 +260,10 @@ export default function LiuYaoDivination() {
     }
     if (!gender) {
       setError(T.fillGender[lang]);
+      return;
+    }
+    if (!birthYear || !birthMonth || !birthDay) {
+      setError(T.fillBirth[lang]);
       return;
     }
     setError(null);
@@ -297,6 +315,9 @@ export default function LiuYaoDivination() {
           solarDate: getTodayString(),
           gender: gender || "未填",
           category: "daily",
+          birthYear,
+          birthMonth,
+          birthDay,
         }),
       });
 
@@ -368,6 +389,45 @@ export default function LiuYaoDivination() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Birth date */}
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500">{T.birthYearLabel[lang]}{" · "}{T.birthMonthLabel[lang]}{" · "}{T.birthDayLabel[lang]}</label>
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                type="number"
+                value={birthYear}
+                onChange={(e) => setBirthYear(Number(e.target.value))}
+                min={1900}
+                max={2100}
+                placeholder="1990"
+                className="w-full px-3 py-2.5 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-gold-400/40 transition-colors"
+              />
+              <select
+                value={birthMonth}
+                onChange={(e) => {
+                  const m = Number(e.target.value);
+                  setBirthMonth(m);
+                  if (birthDay > new Date(birthYear, m, 0).getDate()) setBirthDay(1);
+                }}
+                className="w-full px-3 py-2.5 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm focus:outline-none focus:border-gold-400/40 transition-colors appearance-none"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>{String(m).padStart(2, "0")}{lang === "zh" ? "月" : ""}</option>
+                ))}
+              </select>
+              <select
+                value={birthDay}
+                onChange={(e) => setBirthDay(Number(e.target.value))}
+                className="w-full px-3 py-2.5 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm focus:outline-none focus:border-gold-400/40 transition-colors appearance-none"
+              >
+                {Array.from({ length: new Date(birthYear, birthMonth, 0).getDate() }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={d}>{String(d).padStart(2, "0")}{lang === "zh" ? "日" : ""}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-[10px] text-gray-600">{T.birthHint[lang]}</p>
           </div>
 
           {/* Ceremonial note */}

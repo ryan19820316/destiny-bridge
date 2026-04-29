@@ -244,9 +244,17 @@ export interface LiuyaoDoubaoParams {
   solarDate: string;
   gender: string;
   category: QuestionCategory;
+  birthYear: number;
+  birthMonth: number;
+  birthDay: number;
 }
 
 export function buildLiuyaoUserMessage(params: LiuyaoDoubaoParams): string {
+  const hasBirth = params.birthYear > 0 && params.birthMonth > 0 && params.birthDay > 0;
+  const birthLine = hasBirth
+    ? `出生日期：公历 ${params.birthYear}年${params.birthMonth}月${params.birthDay}日（请结合八字日主五行，辅助判断用神旺衰和求测人运势背景）`
+    : "";
+
   const lines = [
     "请为以下占问起六爻卦并解读：",
     "",
@@ -256,10 +264,11 @@ export function buildLiuyaoUserMessage(params: LiuyaoDoubaoParams): string {
     `摇卦时间：公历 ${params.solarDate}`,
     `性别：${params.gender}`,
     `问事类别：${CATEGORY_LABELS[params.category]}`,
+    birthLine,
     "",
     "请按六爻装卦流程完成排盘（纳甲、六亲、六神、世应、用神），然后给出温暖、实用的中英双语解读。",
   ];
-  return lines.join("\n");
+  return lines.filter(Boolean).join("\n");
 }
 
 export function getLiuyaoSystemPrompt(deep: boolean): string {

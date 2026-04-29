@@ -13,6 +13,9 @@ export async function POST(req: NextRequest) {
       solarDate,
       gender,
       category,
+      birthYear,
+      birthMonth,
+      birthDay,
     } = body;
 
     const validCategories: QuestionCategory[] = ["love", "career", "wealth", "health", "daily"];
@@ -51,6 +54,9 @@ export async function POST(req: NextRequest) {
       solarDate,
       gender,
       category: cat,
+      birthYear: birthYear || 0,
+      birthMonth: birthMonth || 0,
+      birthDay: birthDay || 0,
     });
 
     const content = await callDoubao(systemPrompt, userMessage, {
