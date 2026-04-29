@@ -177,7 +177,6 @@ Output EVERY text field in BOTH Chinese and English.`;
   const content = await callDoubao(WELLNESS_SYSTEM_PROMPT, userMessage, {
     temperature: 0.8,
     max_tokens: 6000,
-    response_format: { type: "json_object" },
   });
 
   const jsonStr = parseJsonFromLLM(content);
@@ -206,7 +205,6 @@ Output EVERY text field in BOTH Chinese and English. Return ONLY the JSON object
   const content = await callDoubao(DAILY_SYSTEM_PROMPT, userMessage, {
     temperature: 0.7,
     max_tokens: 1500,
-    response_format: { type: "json_object" },
   });
 
   const jsonStr = parseJsonFromLLM(content);
@@ -236,7 +234,6 @@ ${conversationHistory || "No prior messages today."}`;
   const content = await callDoubao(systemWithContext, userMessage, {
     temperature: 0.9,
     max_tokens: 600,
-    response_format: { type: "json_object" },
   });
 
   const jsonStr = parseJsonFromLLM(content);

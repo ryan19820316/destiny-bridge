@@ -18,7 +18,6 @@ function getEnv(key: string, fallback = ""): string {
 export interface DoubaoOptions {
   temperature?: number;
   max_tokens?: number;
-  response_format?: { type: string };
 }
 
 export async function callDoubao(
@@ -40,10 +39,6 @@ export async function callDoubao(
     temperature: options?.temperature ?? 0.7,
     max_tokens: options?.max_tokens ?? 2000,
   };
-
-  if (options?.response_format) {
-    body.response_format = options.response_format;
-  }
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
