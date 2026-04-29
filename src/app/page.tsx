@@ -149,6 +149,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"vent" | "liuren" | "liuyao">("liuyao");
   const [showReportSection, setShowReportSection] = useState(false);
   const [lang, setLang] = useState<Lang>("en");
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     const p = getProfile();
@@ -190,7 +191,7 @@ export default function Home() {
 
   const handleGenerateReport = () => {
     if (!birthData) return;
-    savePendingPurchase({ birthData });
+    savePendingPurchase({ birthData, email: userEmail });
     window.location.href = createGumroadCheckout(PRICING.baziBlueprint.permalink, "bazi");
   };
 
@@ -330,6 +331,13 @@ export default function Home() {
                         {lang === "zh" ? "一次购买 · 永久查看" : "One-time · Lifetime access"}
                       </span>
                     </div>
+                    <input
+                      type="email"
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      placeholder={lang === "zh" ? "你的邮箱（接收报告）" : "Your email (to receive report)"}
+                      className="w-full px-4 py-3 rounded-xl bg-mystic-800/60 border border-mystic-700/60 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-gold-400/50 transition-colors"
+                    />
                     <button
                       onClick={handleGenerateReport}
                       className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 shadow-lg"
