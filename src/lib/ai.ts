@@ -1,5 +1,5 @@
 import { VentResponse, BaziResult, BirthData, LiurenPalaceData, QuestionCategory } from "@/types";
-import { callDoubao, parseJsonFromLLM, getDoubaoKey } from "@/lib/doubao";
+import { callDoubao, safeJsonParse, getDoubaoKey } from "@/lib/doubao";
 
 // ===== Clara System Prompts (unchanged — timeless persona definitions) =====
 
@@ -183,12 +183,11 @@ Return ONLY the JSON object as specified.`;
     max_tokens: 8000,
   });
 
-  const jsonStr = parseJsonFromLLM(content);
-  try {
-    return JSON.parse(jsonStr) as import("@/types").BaziReport;
-  } catch {
-    throw new Error(`Failed to parse wellness report JSON: ${jsonStr.slice(0, 200)}`);
-  }
+  return safeJsonParse<import("@/types").BaziReport>(
+    content,
+    undefined,
+    "wellness report"
+  );
 }
 
 // ===== Daily Guidance =====
@@ -211,12 +210,11 @@ Output EVERY text field in BOTH Chinese and English. Return ONLY the JSON object
     max_tokens: 1500,
   });
 
-  const jsonStr = parseJsonFromLLM(content);
-  try {
-    return JSON.parse(jsonStr) as import("@/types").DailyGuidance;
-  } catch {
-    throw new Error(`Failed to parse daily guidance JSON: ${jsonStr.slice(0, 200)}`);
-  }
+  return safeJsonParse<import("@/types").DailyGuidance>(
+    content,
+    undefined,
+    "daily guidance"
+  );
 }
 
 // ===== Vent Response =====
@@ -240,12 +238,11 @@ ${conversationHistory || "No prior messages today."}`;
     max_tokens: 600,
   });
 
-  const jsonStr = parseJsonFromLLM(content);
-  try {
-    return JSON.parse(jsonStr) as VentResponse;
-  } catch {
-    throw new Error(`Failed to parse vent response JSON: ${jsonStr.slice(0, 200)}`);
-  }
+  return safeJsonParse<VentResponse>(
+    content,
+    undefined,
+    "vent response"
+  );
 }
 
 // ===== Xiao Liu Ren Divination (migrated to Doubao — see src/lib/liuren-prompt.ts) =====
@@ -269,12 +266,8 @@ export async function generateLiurenQuick(
     { temperature: 0.7, max_tokens: 500 }
   );
 
-  try {
-    const json = JSON.parse(parseJsonFromLLM(content));
-    return { interpretation: json.interpretation || `${palace.name} — ${json.palaceNameEn}` };
-  } catch {
-    return { interpretation: `${palace.name} (${palace.nameEn})` };
-  }
+  const json = safeJsonParse<Record<string, string>>(content, {});
+  return { interpretation: json.interpretation || `${palace.name} — ${json.palaceNameEn || palace.nameEn}` };
 }
 
 /** @deprecated Xiao Liu Ren deep interpretation is now handled directly by the liuren API route using Doubao. See src/lib/liuren-prompt.ts */
@@ -303,22 +296,13 @@ export async function generateLiurenDeep(
     { temperature: 0.8, max_tokens: 1500 }
   );
 
-  try {
-    const json = JSON.parse(parseJsonFromLLM(content));
-    return {
-      deepInterpretation: json.interpretation || `${palace.name} — ${json.auspiciousness}`,
-      elementAnalysis: json.elementAnalysis || "",
-      domainAnalysis: json.actionAdvice || "",
-      actionAdvice: json.encouragement || "",
-    };
-  } catch {
-    return {
-      deepInterpretation: `${palace.name} (${palace.nameEn}) — ${palace.auspiciousness}`,
-      elementAnalysis: `This palace belongs to the ${palace.element} element.`,
-      domainAnalysis: "",
-      actionAdvice: "Take a slow breath and ask yourself what you truly need right now.",
-    };
-  }
+  const json = safeJsonParse<Record<string, string>>(content, {});
+  return {
+    deepInterpretation: json.interpretation || `${palace.name} — ${json.auspiciousness || palace.auspiciousness}`,
+    elementAnalysis: json.elementAnalysis || `This palace belongs to the ${palace.element} element.`,
+    domainAnalysis: json.actionAdvice || "",
+    actionAdvice: json.encouragement || "Take a slow breath and ask yourself what you truly need right now.",
+  };
 }
 
 // ===== Legacy wrapper =====

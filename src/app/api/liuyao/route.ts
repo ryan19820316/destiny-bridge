@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callDoubao, parseJsonFromLLM, getDoubaoKey } from "@/lib/doubao";
+import { callDoubao, safeJsonParse, getDoubaoKey } from "@/lib/doubao";
 import { buildLiuyaoUserMessage, getLiuyaoSystemPrompt, formatTossResults } from "@/lib/liuyao-prompt";
 import type { QuestionCategory } from "@/types";
 import type { CoinTossLine } from "@/lib/liuyao/types";
@@ -64,15 +64,12 @@ export async function POST(req: NextRequest) {
       max_tokens: 4000,
     });
 
-    const jsonStr = parseJsonFromLLM(content);
-    let result;
-    try {
-      result = JSON.parse(jsonStr);
-    } catch {
+    const result = safeJsonParse<Record<string, unknown>>(content);
+    if (!result) {
       return NextResponse.json({
         error: "豆包返回解析失败，请稍后再试",
         errorEn: "Failed to parse AI response. Please try again.",
-        rawContent: jsonStr.slice(0, 500),
+        rawContent: content.slice(0, 500),
       }, { status: 500 });
     }
 

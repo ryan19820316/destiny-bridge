@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getPendingPurchase } from "@/lib/payment";
 import { updateProfile } from "@/lib/profile";
-import { BaziResult, BirthData } from "@/types";
+import { BaziReport, BirthData } from "@/types";
 import ReportModal from "@/components/ReportModal";
 
 type PurchaseType = "bazi" | "member";
@@ -14,7 +14,7 @@ function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const purchaseType = (searchParams.get("type") || "bazi") as PurchaseType;
   const [status, setStatus] = useState<Status>("loading");
-  const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
+  const [report, setReport] = useState<BaziReport | null>(null);
   const [birthData, setBirthData] = useState<BirthData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,8 +47,8 @@ function PaymentSuccessContent() {
         const err = await res.json();
         throw new Error(err.error || "Report generation failed");
       }
-      const result: BaziResult = await res.json();
-      setBaziResult(result);
+      const result = await res.json();
+      setReport(result.report as BaziReport);
       updateProfile({ baziData: birthData });
       setStatus("done");
     } catch (e) {
@@ -103,15 +103,15 @@ function PaymentSuccessContent() {
           </div>
         )}
 
-        {status === "done" && purchaseType === "bazi" && baziResult?.wellnessReport && birthData && (
+        {status === "done" && purchaseType === "bazi" && report && birthData && (
           <ReportModal
-            report={baziResult.wellnessReport}
+            report={report}
             birthData={birthData}
             lang="zh"
           />
         )}
 
-        {status === "done" && purchaseType === "bazi" && !baziResult?.wellnessReport && (
+        {status === "done" && purchaseType === "bazi" && !report && (
           <div className="space-y-4">
             <div className="mx-auto w-16 h-16 rounded-full bg-gold-400/20 flex items-center justify-center text-3xl">
               🔮

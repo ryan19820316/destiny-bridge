@@ -92,7 +92,7 @@ export default function PricingSection() {
               ))}
             </ul>
             <a
-              href={`${createGumroadCheckout(PRICING.claraMembership.permalink)}`}
+              href={`${createGumroadCheckout(PRICING.claraMembership.permalink, "member")}`}
               className="block text-center py-3.5 px-6 rounded-2xl font-semibold transition-all mt-auto bg-cream-100 text-mystic-950 hover:bg-cream-200 shadow-md"
             >
               {memberActive ? "Manage Membership" : "Start Free Trial"}

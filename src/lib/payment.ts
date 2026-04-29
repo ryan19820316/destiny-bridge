@@ -1,5 +1,8 @@
-export function createGumroadCheckout(productPermalink: string) {
-  return `https://gumroad.com/l/${productPermalink}`;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://destiny-bridge-production.up.railway.app";
+
+export function createGumroadCheckout(productPermalink: string, type: "bazi" | "member") {
+  const redirectUrl = encodeURIComponent(`${APP_URL}/payment/success?type=${type}`);
+  return `https://gumroad.com/l/${productPermalink}?wanted=true&url=${redirectUrl}`;
 }
 
 export const PRICING = {

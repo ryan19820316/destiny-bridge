@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callDoubao, parseJsonFromLLM, getDoubaoKey } from "@/lib/doubao";
+import { callDoubao, safeJsonParse, getDoubaoKey } from "@/lib/doubao";
 import { buildLiurenUserMessage, getLiurenSystemPrompt } from "@/lib/liuren-prompt";
 import { saveLiurenQuery } from "@/lib/profile";
 import { QuestionCategory } from "@/types";
@@ -87,15 +87,12 @@ export async function POST(req: NextRequest) {
       max_tokens: 2000,
     });
 
-    const jsonStr = parseJsonFromLLM(content);
-    let result;
-    try {
-      result = JSON.parse(jsonStr);
-    } catch {
+    const result = safeJsonParse<Record<string, unknown>>(content);
+    if (!result) {
       return NextResponse.json({
         error: "豆包返回解析失败，请稍后再试",
         errorEn: "Failed to parse AI response. Please try again.",
-        rawContent: jsonStr.slice(0, 500),
+        rawContent: content.slice(0, 500),
       }, { status: 500 });
     }
 

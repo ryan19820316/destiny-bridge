@@ -120,8 +120,8 @@ function BaziPreview({ result, birthData, lang }: { result: BaziResult; birthDat
 function ReportPreview({ lang }: { lang: "zh" | "en" }) {
   return (
     <div className="relative">
-      <div className="mystic-card rounded-2xl overflow-hidden" style={{ maxHeight: "500px" }}>
-        <ReportModal lang={lang} blurred />
+      <div className="mystic-card rounded-2xl overflow-hidden blur-sm pointer-events-none select-none" style={{ maxHeight: "500px" }}>
+        <ReportModal lang={lang} />
       </div>
       {/* CTA overlay */}
       <div className="absolute inset-0 flex items-center justify-center bg-mystic-950/60 backdrop-blur-[1px] rounded-2xl">
@@ -145,7 +145,6 @@ export default function Home() {
   const [birthData, setBirthData] = useState<BirthData | null>(null);
   const [result, setResult] = useState<BaziResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"vent" | "liuren" | "liuyao">("liuyao");
   const [showReportSection, setShowReportSection] = useState(false);
@@ -192,7 +191,7 @@ export default function Home() {
   const handleGenerateReport = () => {
     if (!birthData) return;
     savePendingPurchase({ birthData });
-    window.location.href = createGumroadCheckout(PRICING.baziBlueprint.permalink);
+    window.location.href = createGumroadCheckout(PRICING.baziBlueprint.permalink, "bazi");
   };
 
   return (
@@ -333,22 +332,9 @@ export default function Home() {
                     </div>
                     <button
                       onClick={handleGenerateReport}
-                      disabled={aiLoading}
-                      className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 shadow-lg"
                     >
-                      {aiLoading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          {lang === "zh" ? "正在生成…" : "Generating…"}
-                        </span>
-                      ) : lang === "zh" ? (
-                        "生成我的命理报告 →"
-                      ) : (
-                        "Generate My Destiny Report →"
-                      )}
+                      {lang === "zh" ? "购买报告 →" : "Purchase Report →"}
                     </button>
                     <p className="text-xs text-gray-500">
                       {lang === "zh"
