@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callDoubao, parseJsonFromLLM, getDoubaoKey } from "@/lib/doubao";
 import { buildLiuyaoUserMessage, getLiuyaoSystemPrompt, formatTossResults } from "@/lib/liuyao-prompt";
-import {
-  getProfile,
-  isMemberActive,
-  getDailyLiurenCount,
-  incrementLiurenCount,
-} from "@/lib/profile";
 import type { QuestionCategory } from "@/types";
 import type { CoinTossLine } from "@/lib/liuyao/types";
 
@@ -19,12 +13,10 @@ export async function POST(req: NextRequest) {
       solarDate,
       gender,
       category,
-      deep,
     } = body;
 
     const validCategories: QuestionCategory[] = ["love", "career", "wealth", "health", "daily"];
     const cat: QuestionCategory = validCategories.includes(category) ? category : "daily";
-    const requestDeep = deep === true;
 
     if (!question || !solarDate || !gender) {
       return NextResponse.json(
@@ -48,36 +40,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const profile = getProfile();
-    const memberActive = isMemberActive();
-
-    // Free tier: check daily limit
-    if (!memberActive) {
-      const dailyCount = getDailyLiurenCount();
-      if (dailyCount >= 1) {
-        return NextResponse.json({
-          error: "今日免费占卜次数已用完。升级会员享受无限深度解读。",
-          errorEn: "Free daily divination limit reached. Upgrade for unlimited deep readings.",
-          limited: true,
-          dailyFreeUsed: dailyCount,
-        }, { status: 429 });
-      }
-      incrementLiurenCount();
-    }
-
-    // Free tier: no deep reading
-    if (requestDeep && !memberActive) {
-      return NextResponse.json({
-        error: "深度解读需要会员。免费用户可使用快速解读。",
-        errorEn: "Deep reading requires membership. Free users can use quick reading.",
-        limited: true,
-      }, { status: 402 });
-    }
-
     // Format toss results for prompt
     const tossText = formatTossResults(lines as Array<{ position: number; type: string }>);
 
-    const systemPrompt = getLiuyaoSystemPrompt(requestDeep && memberActive);
+    // Everyone gets the full deep reading — no membership gate
+    const systemPrompt = getLiuyaoSystemPrompt(true);
     const userMessage = buildLiuyaoUserMessage({
       question,
       tossResults: tossText,
@@ -86,11 +53,9 @@ export async function POST(req: NextRequest) {
       category: cat,
     });
 
-    const maxTokens = (requestDeep && memberActive) ? 4000 : 1000;
-
     const content = await callDoubao(systemPrompt, userMessage, {
       temperature: 0.7,
-      max_tokens: maxTokens,
+      max_tokens: 4000,
     });
 
     const jsonStr = parseJsonFromLLM(content);
@@ -116,25 +81,36 @@ export async function POST(req: NextRequest) {
       palaceElementEn: result.palaceElementEn || "",
       isJingGua: result.isJingGua ?? true,
       movingLineCount: result.movingLineCount ?? 0,
+      monthBranch: result.monthBranch || "",
+      monthBranchEn: result.monthBranchEn || "",
+      dayBranch: result.dayBranch || "",
+      dayBranchEn: result.dayBranchEn || "",
       lines: result.lines || [],
       yongShen: result.yongShen || "",
       yongShenEn: result.yongShenEn || "",
       yongShenStrength: result.yongShenStrength || "",
       yongShenStrengthEn: result.yongShenStrengthEn || "",
-      movingLineEffects: result.movingLineEffects || "",
-      movingLineEffectsEn: result.movingLineEffectsEn || "",
-      shiYingRelation: result.shiYingRelation || "",
-      shiYingRelationEn: result.shiYingRelationEn || "",
+      section1_shexagramSetup: result.section1_shexagramSetup || "",
+      section1_shexagramSetupEn: result.section1_shexagramSetupEn || "",
+      section2_yongShenAnalysis: result.section2_yongShenAnalysis || "",
+      section2_yongShenAnalysisEn: result.section2_yongShenAnalysisEn || "",
+      section3_hexagramProcess: result.section3_hexagramProcess || "",
+      section3_hexagramProcessEn: result.section3_hexagramProcessEn || "",
       fortuneVerdict: result.fortuneVerdict || "",
       fortuneVerdictEn: result.fortuneVerdictEn || "",
-      timingPrediction: result.timingPrediction || "",
-      timingPredictionEn: result.timingPredictionEn || "",
+      section4_conclusion: result.section4_conclusion || "",
+      section4_conclusionEn: result.section4_conclusionEn || "",
+      section5_timing: result.section5_timing || "",
+      section5_timingEn: result.section5_timingEn || "",
+      section6_risks: result.section6_risks || "",
+      section6_risksEn: result.section6_risksEn || "",
       interpretation: result.interpretation || "",
       interpretationEn: result.interpretationEn || "",
       actionAdvice: result.actionAdvice || "",
       actionAdviceEn: result.actionAdviceEn || "",
-      level: (requestDeep && memberActive) ? "deep" : "quick",
-      memberActive,
+      oneLineSummary: result.oneLineSummary || "",
+      oneLineSummaryEn: result.oneLineSummaryEn || "",
+      level: "deep",
       timestamp: new Date().toISOString(),
     });
   } catch (e) {

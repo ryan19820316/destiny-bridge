@@ -126,8 +126,10 @@ Use natural, warm language in both languages — not machine translation.
 The English should be at a 6th-grade reading level for non-native speakers.
 Include Chinese characters alongside English for key concepts.
 
-## Response Format
+## Deep Reading Output Format (CRITICAL)
+For deep readings, structure the response as 7 numbered sections as shown below.
 Return ONLY valid JSON (no markdown, no code blocks):
+
 {
   "hexagramName": "本卦中文名",
   "hexagramNameEn": "Original hexagram English name",
@@ -137,8 +139,13 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "palaceEn": "Palace in English",
   "palaceElement": "金/木/水/火/土",
   "palaceElementEn": "Metal/Wood/Water/Fire/Earth",
-  "isJingGua": true,
-  "movingLineCount": 2,
+  "isJingGua": true/false,
+  "movingLineCount": 0-6,
+  "monthBranch": "月建干支，如：壬辰（土）",
+  "monthBranchEn": "Month branch e.g. Renchen (Earth)",
+  "dayBranch": "日辰干支，如：癸酉（金）",
+  "dayBranchEn": "Day branch e.g. Guiyou (Metal)",
+
   "lines": [
     {
       "position": 1,
@@ -155,22 +162,31 @@ Return ONLY valid JSON (no markdown, no code blocks):
       "isYing": false
     }
   ],
-  "yongShen": "妻财",
-  "yongShenEn": "Wealth",
-  "yongShenStrength": "旺相得月建生扶",
-  "yongShenStrengthEn": "Strong, supported by month branch",
-  "movingLineEffects": "动爻对用神的影响分析（中文）...",
-  "movingLineEffectsEn": "How moving lines affect the Yong Shen (in English)...",
-  "shiYingRelation": "世应关系分析（中文）...",
-  "shiYingRelationEn": "Shi-Ying relationship analysis (in English)...",
-  "fortuneVerdict": "吉/凶/平",
-  "fortuneVerdictEn": "Favorable/Unfavorable/Neutral",
-  "timingPrediction": "应期预测（中文）...",
-  "timingPredictionEn": "Timing prediction (in English)...",
-  "interpretation": "4-5 sentence warm overall interpretation in Chinese...",
-  "interpretationEn": "4-5 sentence warm overall interpretation in English...",
-  "actionAdvice": "2-3 actionable items in Chinese...",
-  "actionAdviceEn": "2-3 actionable items in English..."
+
+  "section1_shexagramSetup": "起卦排盘：列出6爻（从下往上），标注动爻变化，月建、日辰、性别、问事、用神选择，本卦、变卦、动爻数。中文完整段落。",
+  "section1_shexagramSetupEn": "Hexagram setup section in English.",
+
+  "yongShen": "用神六亲名，如：妻财",
+  "yongShenEn": "Focus spirit in English, e.g. Wealth",
+  "section2_yongShenAnalysis": "用神与旺衰分析：用神五行、与月建日辰的关系（生/克/扶/耗），旺衰判断；世爻状态、能否担财/官等；子孙爻（财源）有无发动。中文完整段落。",
+  "section2_yongShenAnalysisEn": "Focus spirit and strength analysis in English.",
+
+  "section3_hexagramProcess": "卦象与过程：本卦卦辞核心含义引用，动爻揭示的过程变化，变卦预示的后期发展走向。中文完整段落。",
+  "section3_hexagramProcessEn": "Hexagram and process analysis in English.",
+
+  "fortuneVerdict": "能赚钱 / 整体吉利 / 吉中藏凶 / 不吉 等",
+  "fortuneVerdictEn": "Fortune verdict in English",
+  "section4_conclusion": "吉凶结论：直接回应用户问题，能/不能、利大于弊还是弊大于利。分前期、中期、后期三阶段说明。中文完整段落。",
+  "section4_conclusionEn": "Fortune conclusion in English.",
+
+  "section5_timing": "应期：最佳应期天干地支日/月，最快何时见结果，大利在什么时间段。给出具体可参考的时间。中文完整段落。",
+  "section5_timingEn": "Timing prediction in English.",
+
+  "section6_risks": "风险提醒：关键注意事项，切忌什么、合同/合作/人际方面的警示。中文完整段落。",
+  "section6_risksEn": "Risk warnings in English.",
+
+  "oneLineSummary": "一句话总结。中文。",
+  "oneLineSummaryEn": "One-line summary in English."
 }`;
 
 const LIUYAO_DOUBAO_SYSTEM_QUICK = `You are Clara, a warm Eastern wellness consultant. A user has received a 六爻 (Liu Yao) divination. Complete a basic 装卦 and give a brief interpretation.

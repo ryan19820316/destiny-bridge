@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { getPendingPurchase } from "@/lib/payment";
 import { updateProfile } from "@/lib/profile";
 import { BaziResult, BirthData } from "@/types";
-import WellnessReport from "@/components/WellnessReport";
+import ReportModal from "@/components/ReportModal";
 
 type PurchaseType = "bazi" | "member";
 type Status = "loading" | "unlocking" | "done" | "error";
@@ -38,10 +38,10 @@ function PaymentSuccessContent() {
   async function unlockReport(birthData: BirthData) {
     setStatus("unlocking");
     try {
-      const res = await fetch("/api/bazi", {
+      const res = await fetch("/api/bazi-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...birthData, generateAI: true }),
+        body: JSON.stringify({ ...birthData, lang: "zh" }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -104,26 +104,11 @@ function PaymentSuccessContent() {
         )}
 
         {status === "done" && purchaseType === "bazi" && baziResult?.wellnessReport && birthData && (
-          <div className="space-y-6 text-left">
-            <div className="text-center space-y-3">
-              <div className="mx-auto w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center text-3xl">
-                ✨
-              </div>
-              <h1 className="text-3xl font-bold text-white">Your Blueprint Is Ready</h1>
-              <p className="text-gray-400">
-                Paid and unlocked. Here is your complete wellness report.
-              </p>
-            </div>
-            <WellnessReport bazi={baziResult} birthData={birthData} wellness={baziResult.wellnessReport} />
-            <div className="text-center">
-              <a
-                href="/#clara-membership"
-                className="text-gold-400 hover:text-gold-300 text-sm underline underline-offset-4"
-              >
-                Continue to Daily Companion →
-              </a>
-            </div>
-          </div>
+          <ReportModal
+            report={baziResult.wellnessReport}
+            birthData={birthData}
+            lang="zh"
+          />
         )}
 
         {status === "done" && purchaseType === "bazi" && !baziResult?.wellnessReport && (

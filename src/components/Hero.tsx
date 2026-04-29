@@ -8,6 +8,10 @@ export default function Hero() {
         <div className="absolute top-20 left-10 w-72 h-72 bg-gold-400/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-gold-400/5 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-mystic-700/20 rounded-full blur-3xl" />
+        {/* Bagua symbol decoration */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20rem] text-gold-400/[0.03] select-none pointer-events-none">
+          ☰☱☲☳☴☵☶☷
+        </div>
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
@@ -15,49 +19,45 @@ export default function Hero() {
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold-400/30 bg-mystic-800/50 mb-8 animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
           <span className="text-gold-300 text-sm font-medium">
-            Eastern Wellness for Modern Moms
+            Eastern Wellness for Modern Life
           </span>
         </div>
 
         {/* Main heading */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 animate-fade-in">
-          Your Family&apos;s{" "}
-          <span className="gold-text">Wellness Guide</span>
+          Your <span className="gold-text">Wellness Guide</span>
         </h1>
 
         <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-4 animate-fade-in-delay-1 leading-relaxed">
-          Ancient Yin-Yang wisdom meets AI. Get personalized guidance for
-          what to cook, how to dress, where to place your crystals —
-          and how to care for your whole family&apos;s energy.
+          古老易经智慧 × 人工智能，为你的衣食住行、工作、婚姻、养生提供贴心指引。
+        </p>
+
+        <p className="text-sm text-gray-400 max-w-lg mx-auto mb-3 animate-fade-in-delay-1">
+          Ancient I Ching wisdom meets AI — personalized guidance for every aspect of modern life.
         </p>
 
         <p className="text-sm text-gray-400 max-w-lg mx-auto mb-10 animate-fade-in-delay-1">
-          From your birth chart, Clara creates your complete wellness blueprint:
-          food, colors, home, daily rhythm, and self-care — all tailored to your
-          unique Five Elements constitution.
+          让神秘的东方智慧，科学地贴近你的日常生活。
         </p>
 
         {/* CTA */}
         <div className="animate-fade-in-delay-2">
           <a
-            href="#get-started"
+            href="#divination"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 shadow-lg hover:shadow-gold-400/25"
           >
-            Discover Your Blueprint — $9.99
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            用易经开启你人生的第一卦 →
           </a>
         </div>
 
         {/* Trust message */}
         <div className="mt-10 flex flex-col items-center gap-2 text-sm text-gray-400 animate-fade-in-delay-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-gold-400">🛡️</span>
-            <span>Private. Personal. Just for you.</span>
+            <span className="text-gold-400">☯️</span>
+            <span>私密 · 个人 · 只为你</span>
           </div>
           <p className="text-xs text-gray-500">
-            Your birth data never leaves your device.
+            你的个人信息不会离开你的设备。
           </p>
         </div>
 

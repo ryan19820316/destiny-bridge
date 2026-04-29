@@ -54,8 +54,9 @@ EVERY text field MUST have BOTH Chinese and English versions.
 Use natural, warm language in both languages — not machine translation.
 The English should be at a 6th-grade reading level for non-native speakers.
 
-## Response Format
-Return ONLY valid JSON (no markdown, no code blocks):
+## Deep Reading Output Format (CRITICAL)
+Structure the reading as a 5-section result. Return ONLY valid JSON (no markdown, no code blocks):
+
 {
   "palaceName": "大安",
   "palaceNameEn": "Great Peace",
@@ -68,16 +69,26 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "directionEn": "East",
   "lunarDate": "农历三月十三",
   "solarDate": "2026年4月29日",
-  "timeZhi": "午时",
-  "calculation": "农历3月 + 农历13日 + 午时(7) => (3-1)+(13-1)+(7-1) = 2+12+6 = 20, 20%6 = 2, palace = 留连",
-  "interpretation": "Warm 3-4 sentence interpretation in Chinese...",
-  "interpretationEn": "Warm 3-4 sentence interpretation in English...",
-  "elementAnalysis": "五行分析 in Chinese...",
-  "elementAnalysisEn": "Five Element analysis in English...",
-  "actionAdvice": "2-3 actionable suggestions in Chinese...",
-  "actionAdviceEn": "2-3 actionable suggestions in English...",
-  "encouragement": "Ending encouragement in Chinese...",
-  "encouragementEn": "Ending encouragement in English..."
+  "timeZhi": "丑时",
+  "calculation": "农历3月 + 农历13日 + 丑时(2) => (3-1)+(13-1)+(2-1) = 2+12+1 = 15, 15%6 = 3, 结果不对请重新计算",
+
+  "palaceCharacteristic": "留连主拖延、纠缠、反复、慢、有阻碍，但不是绝凶。一句话概括这个掌诀的核心特征。中文。",
+  "palaceCharacteristicEn": "The core characteristic of this palace in English.",
+
+  "section1_overall": "整体评估：中等偏慢/顺利/不顺，给出明确判断。2-3句。中文。",
+  "section1_overallEn": "Overall assessment in English.",
+
+  "section2_process": "过程特点：具体会遇到的状况，比如文件反复、沟通不畅、流程拖沓等。3-4条，用bullet风格。中文。",
+  "section2_processEn": "Process characteristics in English.",
+
+  "section3_outcome": "结果判断：坚持下去的结果，想快的后果。中文。",
+  "section3_outcomeEn": "Outcome judgment in English.",
+
+  "section4_advice": "建议：不宜/适合的具体行动，3-4条实用建议。中文。",
+  "section4_adviceEn": "Actionable advice in English.",
+
+  "oneLineSummary": "一句话总结。中文。",
+  "oneLineSummaryEn": "One-line summary in English."
 }`;
 
 const LIUREN_DOUBAO_SYSTEM_QUICK = `You are Clara, a warm Eastern wellness consultant. A user has received a 小六壬 divination result.

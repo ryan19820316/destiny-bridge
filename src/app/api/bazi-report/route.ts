@@ -31,32 +31,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Gender must be 'male' or 'female'" }, { status: 400 });
     }
 
+    const outputLang = lang === "en" ? "en" : "zh";
+
     const birthData = { year: numYear, month: numMonth, day: numDay, hour: numHour, gender };
     const baziResult = calculateBazi(birthData);
+    const chartText = formatChartForAI(baziResult, birthData);
 
-    // Only generate AI report if explicitly requested — keeps basic chart lookup instant
-    const generateAI = body.generateAI === true;
-
-    let wellnessReport = null;
-    let aiError = null;
-
-    if (generateAI && (process.env.DOUBAO_API_KEY || process.env.ANTHROPIC_API_KEY)) {
-      try {
-        const chartText = formatChartForAI(baziResult, birthData);
-        wellnessReport = await generateWellnessReport(chartText, birthData, lang === "en" ? "en" : "zh");
-      } catch (e) {
-        aiError = e instanceof Error ? e.message : "AI interpretation failed";
-        console.error("AI generation failed:", aiError);
-      }
-    }
+    const report = await generateWellnessReport(chartText, birthData, outputLang);
 
     return NextResponse.json({
-      ...baziResult,
-      wellnessReport,
-      aiError,
+      chart: {
+        fourPillars: `${baziResult.chart.year.stem}${baziResult.chart.year.branch} ${baziResult.chart.month.stem}${baziResult.chart.month.branch} ${baziResult.chart.day.stem}${baziResult.chart.day.branch} ${baziResult.chart.hour.stem}${baziResult.chart.hour.branch}`,
+        dayMaster: baziResult.dayMaster,
+        elements: baziResult.elements,
+        favorableElements: baziResult.favorableElements,
+        unfavorableElements: baziResult.unfavorableElements,
+        tenGods: baziResult.tenGods,
+      },
+      report,
+      timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    console.error("Bazi API error:", e);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Bazi report API error:", e);
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

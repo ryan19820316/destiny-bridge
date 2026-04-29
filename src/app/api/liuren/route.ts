@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callDoubao, parseJsonFromLLM, getDoubaoKey } from "@/lib/doubao";
 import { buildLiurenUserMessage, getLiurenSystemPrompt } from "@/lib/liuren-prompt";
-import {
-  isMemberActive,
-  getDailyLiurenCount,
-  incrementLiurenCount,
-  saveLiurenQuery,
-  getProfile,
-} from "@/lib/profile";
+import { saveLiurenQuery } from "@/lib/profile";
 import { QuestionCategory } from "@/types";
 
 function hourToShichenIndex(hhMM: string): number {
@@ -54,8 +48,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const profile = getProfile();
-    const memberActive = isMemberActive();
     const hourIndex = hourToShichenIndex(timeHHMM);
 
     // Anti-abuse: same category + same shichen can't be re-queried
@@ -71,30 +63,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Free tier: check daily limit
-    if (!memberActive) {
-      const dailyCount = getDailyLiurenCount();
-      if (dailyCount >= 1) {
-        return NextResponse.json({
-          limited: true,
-          dailyFreeUsed: dailyCount,
-          message: "今日免费次数已用完。升级会员享受无限深度推演。",
-          messageEn: "Free daily limit reached. Upgrade to membership for unlimited deep readings.",
-        });
-      }
-      incrementLiurenCount();
-    }
-
     // Save query record
     saveLiurenQuery({
       category: cat,
-      palaceIndex: 0, // will be determined by Doubao
+      palaceIndex: 0,
       hourIndex,
       date: new Date().toISOString().slice(0, 10),
       timestamp: new Date().toISOString(),
     });
 
-    const systemPrompt = getLiurenSystemPrompt(memberActive);
+    // Everyone gets the full deep reading — no membership gate
+    const systemPrompt = getLiurenSystemPrompt(true);
     const userMessage = buildLiurenUserMessage({
       question,
       solarDate,
@@ -105,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     const content = await callDoubao(systemPrompt, userMessage, {
       temperature: 0.8,
-      max_tokens: memberActive ? 2000 : 600,
+      max_tokens: 2000,
     });
 
     const jsonStr = parseJsonFromLLM(content);
@@ -134,17 +113,24 @@ export async function POST(req: NextRequest) {
       solarDate: result.solarDate || solarDate,
       timeZhi: result.timeZhi || "",
       calculation: result.calculation || "",
+      palaceCharacteristic: result.palaceCharacteristic || "",
+      palaceCharacteristicEn: result.palaceCharacteristicEn || "",
+      section1_overall: result.section1_overall || "",
+      section1_overallEn: result.section1_overallEn || "",
+      section2_process: result.section2_process || "",
+      section2_processEn: result.section2_processEn || "",
+      section3_outcome: result.section3_outcome || "",
+      section3_outcomeEn: result.section3_outcomeEn || "",
+      section4_advice: result.section4_advice || "",
+      section4_adviceEn: result.section4_adviceEn || "",
+      oneLineSummary: result.oneLineSummary || "",
+      oneLineSummaryEn: result.oneLineSummaryEn || "",
       interpretation: result.interpretation || "",
       interpretationEn: result.interpretationEn || "",
-      elementAnalysis: result.elementAnalysis || "",
-      elementAnalysisEn: result.elementAnalysisEn || "",
-      actionAdvice: result.actionAdvice || "",
-      actionAdviceEn: result.actionAdviceEn || "",
       encouragement: result.encouragement || "",
       encouragementEn: result.encouragementEn || "",
       category: cat,
-      level: memberActive ? "deep" : "quick",
-      memberActive,
+      level: "deep",
       timestamp: new Date().toISOString(),
     });
   } catch (e) {

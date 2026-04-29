@@ -31,45 +31,79 @@ export interface TenGodResult {
   element: Element;
 }
 
-// ---- Wellness Report (one-time purchase) ----
-export interface WellnessReport {
-  blueprint: string;
-  constitution: Constitution;
-  constitutionExplanation: string;
-
-  food: {
-    favorableIngredients: string[];
-    avoidIngredients: string[];
-    seasonalRecipe: { name: string; why: string; briefRecipe: string };
-    mealRhythm: string;
+// ---- Ba Zi Holistic Report (one-time purchase) ----
+export interface BaziReport {
+  basicChart: {
+    solarDate: string;
+    lunarDate: string;
+    fourPillars: string;
+    dayMaster: string;
+    dayMasterDesc: string;
+    fiveElements: string;
+    zodiac: string;
+    nayin: string;
   };
-  clothing: {
-    powerColors: string[];
-    avoidColors: string[];
-    occasionGuide: { occasion: string; colorTip: string }[];
+  destinySummary: {
+    title: string;
+    overview: string;
+    strengths: string[];
+    weaknesses: string[];
+    overallGrade: string;
+    lifeArc: string;
   };
-  home: {
-    bedroomDirection: string;
-    wealthCorner: string;
-    crystalPlacement: { room: string; crystal: string; purpose: string }[];
-    seasonalAdjustment: string;
+  personality: {
+    core: { title: string; points: string[] };
+    emotional: { title: string; points: string[] };
+    social: { title: string; points: string[] };
   };
-  travel: {
-    favorableDirections: string[];
-    bestTimesForImportant: string;
-    dailyRhythm: string;
+  career: {
+    pattern: { title: string; description: string; suitable: string[]; avoid: string[] };
+    stages: { stage: string; description: string; features: string[] }[];
+    advice: { strengths: string[]; weaknesses: string[]; suggestions: string[] };
   };
-  body: {
-    meridianFocus: string;
-    selfCareRitual: string;
-    emotionalCycle: string;
-    sleepGuide: string;
+  wealth: {
+    pattern: { description: string; regularIncome: string; extraIncome: string; savingsCapacity: string };
+    stages: { stage: string; description: string; features: string[] }[];
+    advice: { suitable: string[]; avoid: string[] };
   };
-
-  crystalSet: { crystal: string; element: string; wearing: string; benefit: string }[];
-  homeProduct: { name: string; placement: string; benefit: string };
-  forecast2026: string;
-  mantra: string;
+  relationships: {
+    loveView: { description: string; strengths: string[]; weaknesses: string[] };
+    marriage: { bestAge: string; stages: { stage: string; description: string; features: string[] }[]; spouse: string; children: string };
+    advice: string[];
+  };
+  health: {
+    constitution: string;
+    risks: string[];
+    stages: { stage: string; description: string }[];
+    advice: { suitable: string[]; avoid: string[] };
+  };
+  fiveElements: {
+    favorable: string[];
+    unfavorable: string[];
+    directions: string;
+    colors: string;
+    industries: string;
+    accessories: string;
+  };
+  lifeSummary: {
+    coreSummary: string;
+    keywords: string[];
+    majorLuck: { ageRange: string; pillar: string; fortune: string }[];
+  };
+  tenYearForecast: {
+    overview: string;
+    years: {
+      year: number;
+      stemBranch: string;
+      fortune: string;
+      description: string;
+      highlights: string[];
+      warnings: string[];
+    }[];
+    careerAdvice: string[];
+    wealthAdvice: string[];
+    healthAdvice: string;
+  };
 }
 
 // ---- Daily Guidance ----
@@ -215,7 +249,7 @@ export interface BaziResult {
   unfavorableElements: Element[];
   tenGods: TenGodResult[];
   aiReport?: AIReport;
-  wellnessReport?: WellnessReport;
+  wellnessReport?: BaziReport;
 }
 
 export interface BirthData {

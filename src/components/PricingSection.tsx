@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { createGumroadCheckout, PRICING } from "@/lib/payment";
 import { isMemberActive } from "@/lib/profile";
 
 export default function PricingSection() {
-  const memberActive = isMemberActive();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const memberActive = mounted && isMemberActive();
 
   return (
     <section className="py-20 px-6">

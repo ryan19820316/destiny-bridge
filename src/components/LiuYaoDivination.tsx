@@ -1,86 +1,76 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  getProfile,
-  isMemberActive,
-  getDailyLiurenCount,
-  incrementLiurenCount,
-  startFreeTrial,
-} from "@/lib/profile";
+import { getProfile } from "@/lib/profile";
 import type { UserProfile } from "@/types";
-import type { CoinTossLine, QuestionCategory } from "@/lib/liuyao/types";
+import type { CoinTossLine } from "@/lib/liuyao/types";
 
-// ---- i18n ----
 type Lang = "zh" | "en";
+
 const T = {
-  categoryLabels: {
-    love: { zh: "感情", en: "Love" },
-    career: { zh: "事业", en: "Career" },
-    wealth: { zh: "财运", en: "Wealth" },
-    health: { zh: "健康", en: "Health" },
-    daily: { zh: "日常", en: "Daily" },
-  } as Record<QuestionCategory, Record<Lang, string>>,
-  emoji: { love: "💕", career: "💼", wealth: "💰", health: "🌿", daily: "✨" },
-  lineLabel: { 1: { zh: "初爻", en: "L1" }, 2: { zh: "二爻", en: "L2" }, 3: { zh: "三爻", en: "L3" }, 4: { zh: "四爻", en: "L4" }, 5: { zh: "五爻", en: "L5" }, 6: { zh: "上爻", en: "L6" } } as Record<number, Record<Lang, string>>,
   questionLabel: { zh: "你想问什么事？（一事一问）", en: "What's your question? (one topic per reading)" },
   questionPlaceholder: { zh: "例如：这次投资能不能赚？我和他能不能复合？", en: "e.g. Will this investment pay off? Will we get back together?" },
-  dateLabel: { zh: "摇卦日期", en: "Divination Date" },
   genderLabel: { zh: "性别", en: "Gender" },
   male: { zh: "男", en: "Male" },
   female: { zh: "女", en: "Female" },
-  meditate: { zh: "心中默念所求之事，然后摇动铜钱", en: "Focus on your question in mind, then toss the coins" },
-  freeTierNote: { zh: "免费用户每日 1 次快速占卜 · 会员无限深度解读", en: "Free: 1 quick reading/day · Members: unlimited deep readings" },
-  tossCoins: { zh: "摇铜钱起卦", en: "Toss Coins" },
-  tossing: { zh: "摇第", en: "Toss " },
-  tossDone: { zh: "卦成！", en: "Hexagram formed!" },
-  hexagramReady: { zh: "卦象已成", en: "Your hexagram is ready" },
-  quickReading: { zh: "快速解卦", en: "Quick Reading" },
+  tossCoins: { zh: "开始掷硬币", en: "Toss Coins" },
   aiDeep: { zh: "AI 深度解读", en: "AI Deep Reading" },
-  aiDeepMember: { zh: "AI 深度解读（会员）", en: "AI Deep Reading (Member)" },
   retoss: { zh: "重新摇卦", en: "Toss Again" },
   interpreting: { zh: "解卦中，请稍候...", en: "Interpreting your hexagram..." },
   again: { zh: "再卜一卦 →", en: "Ask Another →" },
-  hexagram: { zh: "本卦", en: "Original" },
-  changed: { zh: "变卦", en: "→ Changes to" },
   staticHexagram: { zh: "静卦", en: "Static" },
-  movingLines: { zh: "动爻", en: "Moving lines" },
   movingCount: { zh: "个动爻", en: " moving" },
   shi: { zh: "世", en: "Self" },
   ying: { zh: "应", en: "Other" },
-  dailyUsed: { zh: "今日免费占卜次数已用完。升级会员享受无限深度解读。", en: "Today's free reading used. Upgrade to membership for unlimited deep readings." },
-  memberExclusive: { zh: "会员专属", en: "Member Only" },
   positionLabel: { zh: "爻位", en: "Pos" },
   symbolLabel: { zh: "爻象", en: "Symbol" },
   branchLabel: { zh: "地支", en: "Branch" },
   liuqinLabel: { zh: "六亲", en: "Relation" },
   liushenLabel: { zh: "六神", en: "Spirit" },
   markersLabel: { zh: "标记", en: "Mark" },
-  interpretationTitle: { zh: "解读", en: "Reading" },
   fortuneTitle: { zh: "总体判断", en: "Verdict" },
-  timingTitle: { zh: "应期预测", en: "Timing" },
-  yongShenTitle: { zh: "用神分析", en: "Focus Spirit" },
   linesTitle: { zh: "六爻排盘", en: "Six Lines" },
-  upgradeTitle: { zh: "解锁无限占卜", en: "Unlock Unlimited Readings" },
-  upgradeDesc: { zh: "升级Clara会员即可无限使用六爻占卜，并解锁AI深度解读——包含五行分析、行动建议和个性化指导。", en: "Upgrade to Clara Membership for unlimited Liu Yao readings with AI deep interpretation — element analysis, action advice, and personalized guidance." },
-  startTrial: { zh: "开始 7 天免费试用 →", en: "Start 7-Day Free Trial →" },
-  trialNote: { zh: "之后 $6.99/月。随时取消。", en: "Then $6.99/month. Cancel anytime." },
-  freeTierUpsell: { zh: "以上为快速解卦。升级会员解锁 AI 深度解读——五行分析 · 行动建议 · 个性化指导", en: "Quick reading only. Upgrade to unlock AI deep interpretation with element analysis and personalized advice." },
-  elementAnalysisTitle: { zh: "五行分析", en: "Element Analysis" },
-  actionAdviceTitle: { zh: "行动建议", en: "Action Advice" },
-  claraReading: { zh: "Clara 深度解读", en: "Clara Deep Reading" },
   fillQuestion: { zh: "请先填写你的占事", en: "Please enter your question first" },
   fillGender: { zh: "请选择性别", en: "Please select your gender" },
+  ceremonyTitle: { zh: "掷币仪式", en: "Coin Ritual" },
+  ceremonyText: {
+    zh: "为了保证准确性，请静心认真默想要占卜的事项，认真完成每一次的掷硬币。硬币越古老越好。请准备三枚相同的硬币，静心默想你的问题后，掷下硬币，根据三枚硬币的正背面分布，选择对应的爻象。",
+    en: "For an accurate reading, quietly focus on your question before each toss. Older coins work better. Prepare three identical coins, focus on your question, toss them, then select the matching result based on how many heads/tails you see.",
+  },
+  tossStepTitle: { zh: "第 {n} 次掷硬币", en: "Toss #{n}" },
+  tossStepDesc: { zh: "掷下三枚硬币，记录正背面结果", en: "Toss three coins and record the result" },
+  tossGuide: { zh: "如何判断结果", en: "How to read results" },
+  tossGuideContent: {
+    zh: "三枚硬币掷下后，数「背面」的数量：\n0个背面（全正面）→ 老阳 ○\n1个背面 → 少阳 —\n2个背面 → 少阴 - -\n3个背面（全背面）→ 老阴 ×",
+    en: "After tossing three coins, count the number of tails:\n0 tails (all heads) → Old Yang ○\n1 tail → Yang —\n2 tails → Yin - -\n3 tails (all tails) → Old Yin ×",
+  },
+  hexagramReady: { zh: "卦象已成，请选择解读方式", en: "Your hexagram is ready" },
+  oldYang: { zh: "老阳 ○", en: "Old Yang ○" },
+  yang: { zh: "少阳 —", en: "Yang —" },
+  yin: { zh: "少阴 - -", en: "Yin - -" },
+  oldYin: { zh: "老阴 ×", en: "Old Yin ×" },
+  cancel: { zh: "取消", en: "Cancel" },
+  section1Title: { zh: "起卦排盘", en: "Hexagram Setup" },
+  section2Title: { zh: "用神与旺衰（重点）", en: "Focus Spirit & Strength" },
+  section3Title: { zh: "卦象与过程", en: "Hexagram & Process" },
+  section4Title: { zh: "吉凶结论", en: "Fortune Verdict" },
+  section5Title: { zh: "应期", en: "Timing" },
+  section6Title: { zh: "风险提醒", en: "Risk Warnings" },
+  oneLineSummaryTitle: { zh: "一句话总结", en: "In One Sentence" },
+  monthBranchLabel: { zh: "月建", en: "Month Branch" },
+  dayBranchLabel: { zh: "日辰", en: "Day Branch" },
+  deepReadingTitle: { zh: "Clara 深度解读", en: "Clara Deep Reading" },
+  lineLabel: {
+    1: { zh: "初爻", en: "L1" }, 2: { zh: "二爻", en: "L2" }, 3: { zh: "三爻", en: "L3" },
+    4: { zh: "四爻", en: "L4" }, 5: { zh: "五爻", en: "L5" }, 6: { zh: "上爻", en: "L6" },
+  } as Record<number, Record<Lang, string>>,
 };
-
-const LINE_LABEL_KEYS = [6, 5, 4, 3, 2, 1] as const;
 
 function getTodayString(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// ---- Line symbol ----
 function LineSymbol({ line }: { line: { isYang: boolean; isMoving: boolean } }) {
   if (line.isYang && line.isMoving) return <span className="text-amber-400 text-xl font-bold">○</span>;
   if (!line.isYang && line.isMoving) return <span className="text-rose-400 text-xl font-bold">×</span>;
@@ -88,7 +78,6 @@ function LineSymbol({ line }: { line: { isYang: boolean; isMoving: boolean } }) 
   return <span className="text-gray-500 text-xl">━ ━</span>;
 }
 
-// ---- Hexagram visual ----
 function HexagramDisplay({
   lines,
   lang,
@@ -98,12 +87,12 @@ function HexagramDisplay({
 }) {
   return (
     <div className="space-y-[2px] max-w-[160px] mx-auto">
-      {[...lines].reverse().map((line, i) => {
-        const posIdx = 6 - i;
+      {[...lines].reverse().map((line) => {
+        const posIdx = (6 - [...lines].reverse().indexOf(line));
         return (
           <div key={line.position} className="flex items-center justify-center gap-2 py-1">
             <span className="text-[10px] text-gray-500 w-7 text-right shrink-0">
-              {T.lineLabel[posIdx]?.[lang] ?? `L${posIdx}`}
+              {T.lineLabel[line.position]?.[lang] ?? `L${line.position}`}
             </span>
             <LineSymbol line={line} />
           </div>
@@ -113,7 +102,6 @@ function HexagramDisplay({
   );
 }
 
-// Doubao response line type
 interface DoubaoLine {
   position: number;
   isYang: boolean;
@@ -140,54 +128,118 @@ interface DoubaoLiuyaoResponse {
   palaceElementEn: string;
   isJingGua: boolean;
   movingLineCount: number;
+  monthBranch: string;
+  monthBranchEn: string;
+  dayBranch: string;
+  dayBranchEn: string;
   lines: DoubaoLine[];
   yongShen: string;
   yongShenEn: string;
   yongShenStrength: string;
   yongShenStrengthEn: string;
-  movingLineEffects: string;
-  movingLineEffectsEn: string;
-  shiYingRelation: string;
-  shiYingRelationEn: string;
+  section1_shexagramSetup?: string;
+  section1_shexagramSetupEn?: string;
+  section2_yongShenAnalysis?: string;
+  section2_yongShenAnalysisEn?: string;
+  section3_hexagramProcess?: string;
+  section3_hexagramProcessEn?: string;
   fortuneVerdict: string;
   fortuneVerdictEn: string;
-  timingPrediction: string;
-  timingPredictionEn: string;
+  section4_conclusion?: string;
+  section4_conclusionEn?: string;
+  section5_timing?: string;
+  section5_timingEn?: string;
+  section6_risks?: string;
+  section6_risksEn?: string;
   interpretation: string;
   interpretationEn: string;
   actionAdvice?: string;
   actionAdviceEn?: string;
+  oneLineSummary?: string;
+  oneLineSummaryEn?: string;
   level: "quick" | "deep";
   memberActive: boolean;
   timestamp: string;
 }
 
-// ---- Main component ----
+function SectionBlock({
+  number,
+  title,
+  content,
+  highlight,
+  accent,
+  warn,
+}: {
+  number: string;
+  title: string;
+  content: string;
+  highlight?: boolean;
+  accent?: boolean;
+  warn?: boolean;
+  lang?: Lang;
+}) {
+  const bg = highlight
+    ? "bg-gold-400/5 border border-gold-400/15"
+    : accent
+    ? "bg-green-400/5 border border-green-400/15"
+    : warn
+    ? "bg-amber-500/5 border border-amber-500/15"
+    : "bg-mystic-800/30";
+  const numColor = highlight
+    ? "text-gold-300"
+    : accent
+    ? "text-green-400"
+    : warn
+    ? "text-amber-400"
+    : "text-gray-400";
+
+  return (
+    <div className={`p-4 rounded-xl ${bg} space-y-2`}>
+      <p className={`text-xs font-semibold ${numColor}`}>
+        {number}、{title}
+      </p>
+      <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-line">{content}</p>
+    </div>
+  );
+}
+
+type Phase = "idle" | "manual-toss" | "revealed" | "loading" | "done" | "error";
+
+type TossType = "oldYang" | "yang" | "yin" | "oldYin";
+
+const TOSS_DESC: Record<TossType, Record<Lang, string>> = {
+  oldYang: { zh: "全正面 · 阳动变阴", en: "All heads · will change to yin" },
+  yang: { zh: "一背二正 · 阳不变", en: "1 tail 2 heads · stable yang" },
+  yin: { zh: "二背一正 · 阴不变", en: "2 tails 1 head · stable yin" },
+  oldYin: { zh: "全背面 · 阴动变阳", en: "All tails · will change to yang" },
+};
+
+const TOSS_OPTIONS: { type: TossType; isYang: boolean; isMoving: boolean }[] = [
+  { type: "oldYang", isYang: true, isMoving: true },
+  { type: "yang", isYang: true, isMoving: false },
+  { type: "yin", isYang: false, isMoving: false },
+  { type: "oldYin", isYang: false, isMoving: true },
+];
+
 export default function LiuYaoDivination() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [category, setCategory] = useState<QuestionCategory>("daily");
   const [question, setQuestion] = useState("");
-  const [solarDate, setSolarDate] = useState(getTodayString());
   const [gender, setGender] = useState<"男" | "女" | null>(null);
-  const [phase, setPhase] = useState<
-    "idle" | "tossing" | "revealed" | "loading" | "done" | "error" | "limit"
-  >("idle");
+  const [phase, setPhase] = useState<Phase>("idle");
   const [lines, setLines] = useState<CoinTossLine[]>([]);
   const [tossStep, setTossStep] = useState(0);
   const [result, setResult] = useState<DoubaoLiuyaoResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     setProfile(getProfile());
   }, []);
 
-  const memberActive = profile ? isMemberActive() : false;
-  const dailyFreeUsed = profile ? getDailyLiurenCount() : 0;
   const lang: Lang = profile?.languagePreference === "en" ? "en" : "zh";
 
-  const startToss = () => {
-    if (!memberActive && dailyFreeUsed >= 1) return;
+  const startManualToss = () => {
     if (!question.trim()) {
       setError(T.fillQuestion[lang]);
       return;
@@ -199,53 +251,38 @@ export default function LiuYaoDivination() {
     setError(null);
     setRateLimited(null);
     setResult(null);
-    setPhase("tossing");
+    setLines([]);
     setTossStep(0);
-
-    const newLines: CoinTossLine[] = [];
-    let step = 0;
-    const interval = setInterval(() => {
-      const coins = [
-        Math.random() < 0.5 ? "back" : "face",
-        Math.random() < 0.5 ? "back" : "face",
-        Math.random() < 0.5 ? "back" : "face",
-      ];
-      const backs = coins.filter((c) => c === "back").length;
-      let type: CoinTossLine["type"];
-      let isYang: boolean;
-      let isMoving: boolean;
-      if (backs === 0) {
-        type = "oldYin"; isYang = false; isMoving = true;
-      } else if (backs === 1) {
-        type = "yang"; isYang = true; isMoving = false;
-      } else if (backs === 2) {
-        type = "yin"; isYang = false; isMoving = false;
-      } else {
-        type = "oldYang"; isYang = true; isMoving = true;
-      }
-      newLines.push({ position: step + 1, type, isYang, isMoving });
-      setLines([...newLines]);
-      setTossStep(step + 1);
-      step++;
-
-      if (step >= 6) {
-        clearInterval(interval);
-        setPhase("revealed");
-      }
-    }, 600);
+    setPhase("manual-toss");
+    setShowGuide(false);
   };
 
-  const handleQuery = async (deep: boolean) => {
-    if (phase === "loading") return;
+  const recordToss = (tossType: TossType) => {
+    const option = TOSS_OPTIONS.find((o) => o.type === tossType)!;
+    const newLine: CoinTossLine = {
+      position: tossStep + 1,
+      type: tossType,
+      isYang: option.isYang,
+      isMoving: option.isMoving,
+    };
+    const newLines = [...lines, newLine];
+    setLines(newLines);
 
-    if (!memberActive) {
-      const dailyCount = getDailyLiurenCount();
-      if (dailyCount >= 1) {
-        setPhase("limit");
-        return;
-      }
-      incrementLiurenCount();
+    if (tossStep >= 5) {
+      setPhase("revealed");
+    } else {
+      setTossStep(tossStep + 1);
     }
+  };
+
+  const cancelToss = () => {
+    setPhase("idle");
+    setLines([]);
+    setTossStep(0);
+  };
+
+  const handleQuery = async () => {
+    if (phase === "loading") return;
 
     setPhase("loading");
     setError(null);
@@ -257,10 +294,9 @@ export default function LiuYaoDivination() {
         body: JSON.stringify({
           question: question.trim(),
           lines,
-          solarDate,
+          solarDate: getTodayString(),
           gender: gender || "未填",
-          category,
-          deep,
+          category: "daily",
         }),
       });
 
@@ -287,16 +323,8 @@ export default function LiuYaoDivination() {
   };
 
   const reset = () => {
-    const p = getProfile();
-    setProfile(p);
-    const updatedCount = getDailyLiurenCount();
-    const isMember = isMemberActive();
-
-    if (!isMember && updatedCount >= 1) {
-      setPhase("limit");
-    } else {
-      setPhase("idle");
-    }
+    setProfile(getProfile());
+    setPhase("idle");
     setLines([]);
     setTossStep(0);
     setResult(null);
@@ -304,58 +332,12 @@ export default function LiuYaoDivination() {
     setRateLimited(null);
   };
 
-  const handleStartTrial = () => {
-    startFreeTrial();
-    setProfile(getProfile());
-  };
-
-  // ---- Limit state ----
-  if (phase === "limit") {
-    return (
-      <div className="mystic-card rounded-2xl p-8 text-center space-y-4">
-        <div className="text-4xl">☯️</div>
-        <h3 className="text-xl font-bold text-white">
-          {lang === "zh" ? "今日免费次数已用完" : "Today's Free Reading Used"}
-        </h3>
-        <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">{T.upgradeDesc[lang]}</p>
-
-        <div className="grid grid-cols-2 gap-3 text-left max-w-md mx-auto mt-4">
-          <div className="bg-mystic-800/50 rounded-xl p-3 text-xs space-y-1">
-            <p className="text-gray-400 font-medium">{lang === "zh" ? "快速解卦（免费）" : "Quick Reading (Free)"}</p>
-            <p className="text-gray-500">{lang === "zh" ? "✓ 六爻排盘 + 解卦" : "✓ Full hexagram chart"}</p>
-            <p className="text-gray-500">{lang === "zh" ? "✓ 吉凶判断 + 应期" : "✓ Fortune verdict + timing"}</p>
-            <p className="text-gray-500">{lang === "zh" ? "✕ 每天仅1次" : "✕ 1 per day only"}</p>
-          </div>
-          <div className="bg-gold-400/5 border border-gold-400/20 rounded-xl p-3 text-xs space-y-1">
-            <p className="text-gold-300 font-medium">{lang === "zh" ? "深度解读（会员）" : "Deep Reading (Member)"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 以上全部" : "✓ Everything above"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ AI 深度解读" : "✓ AI deep interpretation"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 五行分析 + 行动建议" : "✓ Element analysis + advice"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 无限使用" : "✓ Unlimited readings"}</p>
-          </div>
-        </div>
-
-        {!memberActive && (
-          <>
-            <button
-              onClick={handleStartTrial}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-sm hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg"
-            >
-              {T.startTrial[lang]}
-            </button>
-            <p className="text-xs text-gray-500">{T.trialNote[lang]}</p>
-          </>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* Idle: inputs + toss button */}
+      {/* Idle: inputs */}
       {phase === "idle" && (
         <>
-          {/* Question input */}
+          {/* Question */}
           <div className="space-y-1">
             <label className="text-xs text-gray-500">{T.questionLabel[lang]}</label>
             <input
@@ -368,110 +350,136 @@ export default function LiuYaoDivination() {
             />
           </div>
 
-          {/* Date + Gender row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500">{T.dateLabel[lang]}</label>
-              <input
-                type="date"
-                value={solarDate}
-                onChange={(e) => setSolarDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm focus:outline-none focus:border-gold-400/40 transition-colors"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500">{T.genderLabel[lang]}</label>
-              <div className="flex gap-1">
-                {(["男", "女"] as const).map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setGender(gender === g ? null : g)}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                      gender === g
-                        ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
-                        : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50 border border-mystic-700"
-                    }`}
-                  >
-                    {g === "男" ? T.male[lang] : T.female[lang]}
-                  </button>
-                ))}
-              </div>
+          {/* Gender */}
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500">{T.genderLabel[lang]}</label>
+            <div className="flex gap-2">
+              {(["男", "女"] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGender(gender === g ? null : g)}
+                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
+                    gender === g
+                      ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
+                      : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50 border border-mystic-700"
+                  }`}
+                >
+                  {g === "男" ? T.male[lang] : T.female[lang]}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Category selector */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {(Object.keys(T.categoryLabels) as QuestionCategory[]).map((c) => (
-              <button
-                key={c}
-                onClick={() => setCategory(c)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  category === c
-                    ? "bg-gold-400/20 text-gold-300 border border-gold-400/40"
-                    : "bg-mystic-800/50 text-gray-400 border border-mystic-700 hover:border-mystic-600"
-                }`}
-              >
-                {T.emoji[c]} {T.categoryLabels[c][lang]}
-              </button>
-            ))}
+          {/* Ceremonial note */}
+          <div className="p-4 rounded-xl bg-mystic-800/30 border border-mystic-700/50 text-center space-y-2">
+            <p className="text-gold-400 text-sm font-medium">🪙 {T.ceremonyTitle[lang]}</p>
+            <p className="text-gray-400 text-xs leading-relaxed">
+              {T.ceremonyText[lang]}
+            </p>
           </div>
 
+          {/* Toss button */}
           <div className="text-center space-y-3">
-            <p className="text-gray-400 text-sm">{T.meditate[lang]}</p>
-            {!memberActive && dailyFreeUsed >= 1 ? (
-              <p className="text-xs text-amber-400/80">{T.dailyUsed[lang]}</p>
-            ) : (
-              !memberActive && (
-                <p className="text-xs text-gold-400/70">{T.freeTierNote[lang]}</p>
-              )
-            )}
             <button
-              onClick={startToss}
-              disabled={!memberActive && dailyFreeUsed >= 1}
-              className={`px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg ${
-                !memberActive && dailyFreeUsed >= 1 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              onClick={startManualToss}
+              className="px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg"
             >
               🪙 {T.tossCoins[lang]}
             </button>
           </div>
+
+          {error && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+              {error}
+            </div>
+          )}
         </>
       )}
 
-      {/* Tossing animation */}
-      {phase === "tossing" && (
-        <div className="space-y-4">
-          <p className="text-center text-gold-300 font-medium">
-            {tossStep < 6
-              ? `${T.tossing[lang]}${lang === "zh" ? `第 ${tossStep + 1} 次` : `#${tossStep + 1}`}...`
-              : T.tossDone[lang]}
-          </p>
-          <div className="space-y-2 max-w-xs mx-auto">
-            {LINE_LABEL_KEYS.map((pos, idx) => {
-              const line = idx < lines.length ? lines[idx] : null;
-              return (
-                <div
-                  key={pos}
-                  className={`flex items-center justify-center gap-3 py-2 rounded-lg transition-all ${
-                    idx === tossStep - 1 ? "bg-gold-400/10 border border-gold-400/30" : ""
-                  } ${line ? "" : "opacity-30"}`}
-                >
-                  <span className="text-xs text-gray-500 w-7 text-right">
-                    {T.lineLabel[pos]?.[lang] ?? `L${pos}`}
-                  </span>
-                  {line ? (
-                    <LineSymbol line={line} />
-                  ) : (
-                    <span className="text-gray-700 text-lg animate-pulse">···</span>
-                  )}
-                </div>
-              );
-            })}
+      {/* Manual toss step-by-step */}
+      {phase === "manual-toss" && (
+        <div className="space-y-5">
+          {/* Progress */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white font-semibold">
+              {T.tossStepTitle[lang].replace("{n}", String(tossStep + 1))}
+            </span>
+            <span className="text-gray-500 text-xs">{tossStep + 1} / 6</span>
           </div>
+
+          <p className="text-gray-400 text-xs text-center">
+            {T.tossStepDesc[lang]}
+          </p>
+
+          {/* Toss result buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            {TOSS_OPTIONS.map((opt) => (
+              <button
+                key={opt.type}
+                onClick={() => recordToss(opt.type)}
+                className="p-4 rounded-xl bg-mystic-800/50 border border-mystic-700 hover:border-gold-400/40 hover:bg-mystic-700/30 transition-all text-center space-y-1"
+              >
+                <div className="text-2xl">
+                  {opt.type === "oldYang" ? "○" : opt.type === "yang" ? "━━━" : opt.type === "yin" ? "━ ━" : "×"}
+                </div>
+                <p className="text-white text-sm font-medium">
+                  {T[opt.type][lang]}
+                </p>
+                <p className="text-gray-500 text-[10px]">
+                  {TOSS_DESC[opt.type][lang]}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          {/* Toss guide toggle */}
+          <div className="text-center">
+            <button
+              onClick={() => setShowGuide(!showGuide)}
+              className="text-xs text-gray-500 hover:text-gold-400 underline underline-offset-4 transition-colors"
+            >
+              {T.tossGuide[lang]}
+            </button>
+            {showGuide && (
+              <div className="mt-3 p-3 rounded-xl bg-mystic-800/40 border border-mystic-700/50 text-xs text-gray-400 leading-relaxed whitespace-pre-line text-left">
+                {T.tossGuideContent[lang]}
+              </div>
+            )}
+          </div>
+
+          {/* So-far display */}
+          {lines.length > 0 && (
+            <div className="space-y-[2px] max-w-[160px] mx-auto">
+              {lines.map((line) => (
+                <div key={line.position} className="flex items-center justify-center gap-2 py-1">
+                  <span className="text-[10px] text-gray-500 w-7 text-right shrink-0">
+                    {T.lineLabel[line.position][lang]}
+                  </span>
+                  <LineSymbol line={line} />
+                </div>
+              ))}
+              {Array.from({ length: 6 - lines.length }).map((_, i) => (
+                <div key={`empty-${i}`} className="flex items-center justify-center gap-2 py-1 opacity-20">
+                  <span className="text-[10px] text-gray-600 w-7 text-right shrink-0">
+                    {T.lineLabel[i + lines.length + 1]?.[lang] ?? `L${i + lines.length + 1}`}
+                  </span>
+                  <span className="text-gray-700 text-lg">···</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Cancel */}
+          <button
+            onClick={cancelToss}
+            className="block mx-auto text-sm text-gray-500 hover:text-gray-400 underline underline-offset-4"
+          >
+            {T.cancel[lang]}
+          </button>
         </div>
       )}
 
-      {/* Revealed: hexagram preview */}
+      {/* Revealed: hexagram preview + action buttons */}
       {phase === "revealed" && (
         <div className="space-y-6">
           <div className="text-center">
@@ -489,27 +497,11 @@ export default function LiuYaoDivination() {
 
           <div className="flex justify-center gap-4">
             <button
-              onClick={() => handleQuery(false)}
-              className="px-6 py-3 rounded-xl bg-mystic-800 border border-mystic-600 text-white font-semibold hover:bg-mystic-700 transition-all"
+              onClick={() => handleQuery()}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold hover:from-gold-300 hover:to-gold-200 transition-all"
             >
-              🔮 {T.quickReading[lang]}
+              ✨ {T.aiDeep[lang]}
             </button>
-            {memberActive ? (
-              <button
-                onClick={() => handleQuery(true)}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold hover:from-gold-300 hover:to-gold-200 transition-all"
-              >
-                ✨ {T.aiDeep[lang]}
-              </button>
-            ) : (
-              <button
-                disabled
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold opacity-50 cursor-not-allowed text-sm"
-                title={T.memberExclusive[lang]}
-              >
-                ✨ {T.aiDeepMember[lang]}
-              </button>
-            )}
           </div>
 
           <button
@@ -537,7 +529,6 @@ export default function LiuYaoDivination() {
       {/* Result */}
       {phase === "done" && result && (
         <div className="space-y-6">
-          {/* Header */}
           <div className="mystic-card rounded-2xl p-6 text-center space-y-4">
             <h3 className="text-2xl font-bold text-white">
               {lang === "en" && result.hexagramNameEn ? result.hexagramNameEn : result.hexagramName}
@@ -550,7 +541,6 @@ export default function LiuYaoDivination() {
                 </span>
               )}
             </h3>
-            {/* Show both names if in Chinese mode for reference */}
             {lang === "zh" && result.hexagramNameEn && (
               <p className="text-xs text-gray-500">
                 {result.hexagramNameEn}
@@ -564,6 +554,14 @@ export default function LiuYaoDivination() {
                 ? ` · ${T.staticHexagram[lang]}`
                 : ` · ${result.movingLineCount}${T.movingCount[lang]}`}
             </p>
+
+            {/* Month/Day branch */}
+            {(result.monthBranch || result.dayBranch) && (
+              <div className="flex justify-center gap-4 text-xs text-gray-500">
+                <span>{T.monthBranchLabel[lang]}：{lang === "en" && result.monthBranchEn ? result.monthBranchEn : result.monthBranch}</span>
+                <span>{T.dayBranchLabel[lang]}：{lang === "en" && result.dayBranchEn ? result.dayBranchEn : result.dayBranch}</span>
+              </div>
+            )}
 
             <HexagramDisplay lines={result.lines} lang={lang} />
           </div>
@@ -625,104 +623,121 @@ export default function LiuYaoDivination() {
             ))}
           </div>
 
-          {/* Interpretation */}
-          <div className="mystic-card rounded-2xl p-6 space-y-4">
-            {/* Plain-language interpretation */}
-            <div className="p-4 rounded-xl bg-gold-400/5 border border-gold-400/15">
-              <p className="text-gray-200 text-sm leading-relaxed">
-                {lang === "en" && result.interpretationEn ? result.interpretationEn : result.interpretation}
-              </p>
-            </div>
+          {/* Deep reading: 7-section template format */}
+          {result.level === "deep" && (
+            <div className="mystic-card rounded-2xl p-6 space-y-5">
+              <h4 className="text-gold-400 font-semibold text-center">✨ {T.deepReadingTitle[lang]}</h4>
 
-            {/* Fortune verdict */}
-            {(result.fortuneVerdict || result.fortuneVerdictEn) && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-mystic-800/30">
-                <span className="text-xs text-gray-500">{T.fortuneTitle[lang]}:</span>
-                <span className={`font-semibold text-sm ${
-                  (result.fortuneVerdictEn || result.fortuneVerdict).includes("Favorable") || result.fortuneVerdict.includes("吉")
-                    ? "text-green-400"
-                    : (result.fortuneVerdictEn || result.fortuneVerdict).includes("Unfavorable") || result.fortuneVerdict.includes("凶")
-                    ? "text-red-400"
-                    : "text-yellow-400"
-                }`}>
-                  {lang === "en" && result.fortuneVerdictEn ? result.fortuneVerdictEn : result.fortuneVerdict}
-                </span>
-              </div>
-            )}
+              {/* Section 1: Hexagram Setup */}
+              {(result.section1_shexagramSetup || result.section1_shexagramSetupEn) && (
+                <SectionBlock
+                  number="一"
+                  title={T.section1Title[lang]}
+                  content={lang === "en" && result.section1_shexagramSetupEn ? result.section1_shexagramSetupEn : (result.section1_shexagramSetup || "")}
+                  lang={lang}
+                />
+              )}
 
-            {/* Timing */}
-            {(result.timingPrediction || result.timingPredictionEn) && (
-              <div className="p-3 rounded-xl bg-mystic-800/30">
-                <p className="text-xs text-gray-500 mb-1">{T.timingTitle[lang]}</p>
-                <p className="text-gray-300 text-sm">
-                  {lang === "en" && result.timingPredictionEn ? result.timingPredictionEn : result.timingPrediction}
-                </p>
-              </div>
-            )}
+              {/* Section 2: Yong Shen Analysis */}
+              {(result.section2_yongShenAnalysis || result.section2_yongShenAnalysisEn) && (
+                <SectionBlock
+                  number="二"
+                  title={T.section2Title[lang]}
+                  content={lang === "en" && result.section2_yongShenAnalysisEn ? result.section2_yongShenAnalysisEn : (result.section2_yongShenAnalysis || "")}
+                  highlight
+                  lang={lang}
+                />
+              )}
 
-            {/* Deep interpretation sections */}
-            {result.level === "deep" && (
-              <>
-                <hr className="border-mystic-700" />
-                <h4 className="text-gold-400 font-medium">✨ {T.claraReading[lang]}</h4>
+              {/* Section 3: Hexagram Process */}
+              {(result.section3_hexagramProcess || result.section3_hexagramProcessEn) && (
+                <SectionBlock
+                  number="三"
+                  title={T.section3Title[lang]}
+                  content={lang === "en" && result.section3_hexagramProcessEn ? result.section3_hexagramProcessEn : (result.section3_hexagramProcess || "")}
+                  lang={lang}
+                />
+              )}
 
-                {/* Yong Shen */}
-                {(result.yongShen || result.yongShenEn) && (
-                  <div className="p-3 rounded-xl bg-mystic-800/30">
-                    <p className="text-xs text-gray-500 mb-1">{T.yongShenTitle[lang]}</p>
-                    <p className="text-gray-300 text-sm">
-                      {lang === "en" && result.yongShenEn ? result.yongShenEn : result.yongShen}
-                      {(result.yongShenStrength || result.yongShenStrengthEn) && (
-                        <span className="text-gray-500">
-                          {" — "}
-                          {lang === "en" && result.yongShenStrengthEn
-                            ? result.yongShenStrengthEn
-                            : result.yongShenStrength}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                )}
+              {/* Section 4: Conclusion */}
+              {(result.section4_conclusion || result.section4_conclusionEn) && (
+                <SectionBlock
+                  number="四"
+                  title={T.section4Title[lang]}
+                  content={lang === "en" && result.section4_conclusionEn ? result.section4_conclusionEn : (result.section4_conclusion || "")}
+                  accent
+                  lang={lang}
+                />
+              )}
 
-                {/* Moving line effects */}
-                {(result.movingLineEffects || result.movingLineEffectsEn) && (
-                  <div className="p-3 rounded-xl bg-mystic-800/30">
-                    <p className="text-xs text-gray-500 mb-1">{T.movingLines[lang]}</p>
-                    <p className="text-gray-300 text-sm">
-                      {lang === "en" && result.movingLineEffectsEn
-                        ? result.movingLineEffectsEn
-                        : result.movingLineEffects}
-                    </p>
-                  </div>
-                )}
+              {/* Section 5: Timing */}
+              {(result.section5_timing || result.section5_timingEn) && (
+                <SectionBlock
+                  number="五"
+                  title={T.section5Title[lang]}
+                  content={lang === "en" && result.section5_timingEn ? result.section5_timingEn : (result.section5_timing || "")}
+                  lang={lang}
+                />
+              )}
 
-                {/* Action advice */}
-                {(result.actionAdvice || result.actionAdviceEn) && (
-                  <div className="p-3 rounded-xl bg-gold-400/5 border border-gold-400/20">
-                    <p className="text-xs text-gold-400 font-medium mb-1">{T.actionAdviceTitle[lang]}</p>
-                    <p className="text-gray-300 text-sm">
-                      {lang === "en" && result.actionAdviceEn ? result.actionAdviceEn : result.actionAdvice}
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              {/* Section 6: Risks */}
+              {(result.section6_risks || result.section6_risksEn) && (
+                <SectionBlock
+                  number="六"
+                  title={T.section6Title[lang]}
+                  content={lang === "en" && result.section6_risksEn ? result.section6_risksEn : (result.section6_risks || "")}
+                  warn
+                  lang={lang}
+                />
+              )}
 
-          {/* Free tier upsell */}
-          {!memberActive && (
-            <div className="p-4 rounded-xl bg-gold-400/5 border border-gold-400/15 text-center space-y-2">
-              <p className="text-xs text-gray-400">{T.freeTierUpsell[lang]}</p>
-              <button
-                onClick={handleStartTrial}
-                className="px-4 py-2 rounded-lg bg-gold-400/15 text-gold-300 text-xs font-semibold hover:bg-gold-400/25 transition-all"
-              >
-                {T.startTrial[lang]}
-              </button>
+              {/* One-Line Summary */}
+              {(result.oneLineSummary || result.oneLineSummaryEn) && (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-gold-400/10 to-mystic-800/30 border border-gold-400/20 text-center">
+                  <p className="text-xs text-gold-400/70 mb-1">{T.oneLineSummaryTitle[lang]}</p>
+                  <p className="text-gold-200 font-medium">
+                    {lang === "en" && result.oneLineSummaryEn ? result.oneLineSummaryEn : (result.oneLineSummary || "")}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Ask another */}
+          {/* Quick reading: simple interpretation */}
+          {result.level !== "deep" && (
+            <div className="mystic-card rounded-2xl p-6 space-y-4">
+              <div className="p-4 rounded-xl bg-gold-400/5 border border-gold-400/15">
+                <p className="text-gray-200 text-sm leading-relaxed">
+                  {lang === "en" && result.interpretationEn ? result.interpretationEn : result.interpretation}
+                </p>
+              </div>
+
+              {(result.fortuneVerdict || result.fortuneVerdictEn) && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-mystic-800/30">
+                  <span className="text-xs text-gray-500">{T.fortuneTitle[lang]}:</span>
+                  <span className={`font-semibold text-sm ${
+                    (result.fortuneVerdictEn || result.fortuneVerdict).includes("Favorable") || result.fortuneVerdict.includes("吉")
+                      ? "text-green-400"
+                      : (result.fortuneVerdictEn || result.fortuneVerdict).includes("Unfavorable") || result.fortuneVerdict.includes("凶")
+                      ? "text-red-400"
+                      : "text-yellow-400"
+                  }`}>
+                    {lang === "en" && result.fortuneVerdictEn ? result.fortuneVerdictEn : result.fortuneVerdict}
+                  </span>
+                </div>
+              )}
+
+              {(result.section5_timing || result.section5_timingEn) && (
+                <div className="p-3 rounded-xl bg-mystic-800/30">
+                  <p className="text-xs text-gray-500 mb-1">{T.section5Title[lang]}</p>
+                  <p className="text-gray-300 text-sm">
+                    {lang === "en" && result.section5_timingEn ? result.section5_timingEn : (result.section5_timing || "")}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={reset}
             className="block mx-auto text-sm text-gold-400 hover:text-gold-300 underline underline-offset-4"

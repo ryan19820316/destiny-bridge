@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { isMemberActive } from "@/lib/profile";
 import type { ShopProduct } from "@/types";
 
@@ -93,7 +93,9 @@ const ELEMENT_EMOJI: Record<string, string> = {
 
 export default function ShopSection() {
   const [activeCategory, setActiveCategory] = useState<Category>("all");
-  const memberActive = isMemberActive();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const memberActive = mounted ? isMemberActive() : true;
 
   const filtered =
     activeCategory === "all"

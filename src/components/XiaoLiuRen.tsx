@@ -1,18 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getProfile, isMemberActive, getDailyLiurenCount, startFreeTrial } from "@/lib/profile";
-import type { UserProfile, QuestionCategory } from "@/types";
+import { getProfile } from "@/lib/profile";
+import type { UserProfile } from "@/types";
 
-const CATEGORIES: { value: QuestionCategory; label: string; labelEn: string; emoji: string }[] = [
-  { value: "love", label: "感情", labelEn: "Love", emoji: "💕" },
-  { value: "family", label: "家庭", labelEn: "Family", emoji: "🏠" },
-  { value: "health", label: "健康", labelEn: "Health", emoji: "🌿" },
-  { value: "career", label: "事业", labelEn: "Career", emoji: "💼" },
-  { value: "daily", label: "日常", labelEn: "Daily", emoji: "✨" },
-];
-
-// New Doubao response shape
 interface DoubaoLiurenResponse {
   palaceName: string;
   palaceNameEn: string;
@@ -27,17 +18,23 @@ interface DoubaoLiurenResponse {
   solarDate: string;
   timeZhi: string;
   calculation: string;
+  palaceCharacteristic?: string;
+  palaceCharacteristicEn?: string;
+  section1_overall?: string;
+  section1_overallEn?: string;
+  section2_process?: string;
+  section2_processEn?: string;
+  section3_outcome?: string;
+  section3_outcomeEn?: string;
+  section4_advice?: string;
+  section4_adviceEn?: string;
+  oneLineSummary?: string;
+  oneLineSummaryEn?: string;
   interpretation: string;
   interpretationEn: string;
-  elementAnalysis?: string;
-  elementAnalysisEn?: string;
-  actionAdvice?: string;
-  actionAdviceEn?: string;
   encouragement?: string;
   encouragementEn?: string;
-  category: QuestionCategory;
   level: "quick" | "deep";
-  memberActive: boolean;
   timestamp: string;
 }
 
@@ -62,23 +59,16 @@ function getNowTimeString(): string {
 
 export default function XiaoLiuRen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [category, setCategory] = useState<QuestionCategory>("daily");
   const [question, setQuestion] = useState("");
-  const [solarDate, setSolarDate] = useState(getTodayString());
-  const [timeHHMM, setTimeHHMM] = useState(getNowTimeString());
-  const [gender, setGender] = useState<"男" | "女" | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DoubaoLiurenResponse | null>(null);
-  const [limited, setLimited] = useState(false);
   const [rateLimited, setRateLimited] = useState<string | null>(null);
 
   useEffect(() => {
     setProfile(getProfile());
   }, []);
 
-  const memberActive = profile ? isMemberActive() : false;
-  const dailyFreeUsed = profile ? getDailyLiurenCount() : 0;
   const lang = profile?.languagePreference === "en" ? "en" : "zh";
 
   const handleQuery = async () => {
@@ -90,7 +80,6 @@ export default function XiaoLiuRen() {
     setLoading(true);
     setError(null);
     setResult(null);
-    setLimited(false);
     setRateLimited(null);
 
     try {
@@ -99,20 +88,15 @@ export default function XiaoLiuRen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: question.trim(),
-          solarDate,
-          timeHHMM,
-          gender,
-          category,
+          solarDate: getTodayString(),
+          timeHHMM: getNowTimeString(),
+          category: "daily",
         }),
       });
 
       if (res.status === 429) {
         const data = await res.json();
-        if (data.limited) {
-          setLimited(true);
-        } else {
-          setRateLimited(data.error || data.errorEn || "Rate limited");
-        }
+        setRateLimited(data.error || data.errorEn || "Rate limited");
         setLoading(false);
         return;
       }
@@ -132,11 +116,6 @@ export default function XiaoLiuRen() {
     }
   };
 
-  const handleStartTrial = () => {
-    startFreeTrial();
-    setProfile(getProfile());
-  };
-
   if (!profile) {
     return (
       <div className="mystic-card rounded-2xl p-8 text-center">
@@ -145,76 +124,18 @@ export default function XiaoLiuRen() {
     );
   }
 
-  // Free tier, daily limit exhausted
-  if (!memberActive && limited) {
-    return (
-      <div className="mystic-card rounded-2xl p-8 text-center space-y-4">
-        <div className="text-4xl">🔮</div>
-        <h3 className="text-xl font-bold text-white">
-          {lang === "zh" ? "今日免费次数已用完" : "Today's Free Reading Used"}
-        </h3>
-        <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
-          {lang === "zh"
-            ? "小六壬速断每天可免费使用1次。升级Clara会员即可无限使用，并解锁深度全盘推演。"
-            : "Free Xiao Liu Ren readings are limited to 1 per day. Upgrade to Clara Membership for unlimited use with deep multi-dimensional analysis."}
-        </p>
-
-        <div className="grid grid-cols-2 gap-3 text-left max-w-md mx-auto mt-4">
-          <div className="bg-mystic-800/50 rounded-xl p-3 text-xs space-y-1">
-            <p className="text-gray-400 font-medium">{lang === "zh" ? "小六壬速断（免费）" : "Quick Reading (Free)"}</p>
-            <p className="text-gray-500">{lang === "zh" ? "✓ 掌诀名称 + 吉凶" : "✓ Palace name + fortune"}</p>
-            <p className="text-gray-500">{lang === "zh" ? "✓ 一句话提示" : "✓ One-sentence reading"}</p>
-            <p className="text-gray-500">{lang === "zh" ? "✕ 每天仅1次" : "✕ 1 per day only"}</p>
-          </div>
-          <div className="bg-gold-400/5 border border-gold-400/20 rounded-xl p-3 text-xs space-y-1">
-            <p className="text-gold-300 font-medium">{lang === "zh" ? "深度全盘推演（会员）" : "Deep Reading (Member)"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 掌诀解读" : "✓ Palace interpretation"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 五行生克分析" : "✓ Five Element analysis"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 行动建议" : "✓ Action advice"}</p>
-            <p className="text-gold-300/70">{lang === "zh" ? "✓ 无限使用" : "✓ Unlimited readings"}</p>
-          </div>
-        </div>
-
-        <button
-          onClick={handleStartTrial}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-sm hover:from-gold-300 hover:to-gold-200 transition-all shadow-lg"
-        >
-          {lang === "zh" ? "开始 7 天免费试用 →" : "Start 7-Day Free Trial →"}
-        </button>
-        <p className="text-xs text-gray-500">
-          {lang === "zh" ? "之后 $6.99/月。随时取消。" : "Then $6.99/month. Cancel anytime."}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="mystic-card rounded-2xl p-6 space-y-5">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-mystic-700 flex items-center justify-center text-lg">🔮</div>
         <div>
           <h3 className="font-semibold text-white text-sm">
-            {memberActive
-              ? (lang === "zh" ? "深度全盘推演" : "Deep Full Reading")
-              : (lang === "zh" ? "小六壬速断" : "Xiao Liu Ren Quick")}
+            {lang === "zh" ? "小六壬掌诀推演" : "Xiao Liu Ren Divination"}
           </h3>
           <p className="text-xs text-gray-500">
-            {memberActive
-              ? (lang === "zh" ? "小六壬 + 五行 + 节气综合推演" : "XLR + Five Elements + Solar Term")
-              : (lang === "zh" ? "每日1次免费 · 小六壬掌诀速断" : "1 free/day · Quick palm reading")}
+            {lang === "zh" ? "一事一问 · 掌诀定乾坤" : "One question · palm decides"}
           </p>
         </div>
-        {memberActive && (
-          <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gold-400/15 text-gold-300 border border-gold-400/20">
-            Clara Member
-          </span>
-        )}
-        {!memberActive && dailyFreeUsed < 1 && (
-          <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-mystic-700 text-gray-400">
-            {lang === "zh" ? `今日剩余 ${1 - dailyFreeUsed} 次` : `${1 - dailyFreeUsed} remaining today`}
-          </span>
-        )}
       </div>
 
       {/* Question input */}
@@ -230,85 +151,13 @@ export default function XiaoLiuRen() {
             setResult(null);
             setError(null);
           }}
-          placeholder={lang === "zh" ? "例如：这次项目能不能赚钱？合作能不能成？" : "e.g. Will this project be profitable? Is this partnership right?"}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleQuery();
+          }}
+          placeholder={lang === "zh" ? "例如：这次项目能不能赚钱？合作能不能成？" : "e.g. Will this project succeed? Is this the right time to move?"}
           maxLength={80}
           className="w-full px-4 py-3 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-gold-400/40 transition-colors"
         />
-      </div>
-
-      {/* Date + Time row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="text-xs text-gray-500">
-            {lang === "zh" ? "公历日期" : "Date"}
-          </label>
-          <input
-            type="date"
-            value={solarDate}
-            onChange={(e) => setSolarDate(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm focus:outline-none focus:border-gold-400/40 transition-colors"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs text-gray-500">
-            {lang === "zh" ? "具体时间" : "Time"}
-          </label>
-          <input
-            type="time"
-            value={timeHHMM}
-            onChange={(e) => setTimeHHMM(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-mystic-800/50 border border-mystic-700 text-white text-sm focus:outline-none focus:border-gold-400/40 transition-colors"
-          />
-        </div>
-      </div>
-
-      {/* Gender (optional) */}
-      <div className="space-y-1">
-        <label className="text-xs text-gray-500">
-          {lang === "zh" ? "性别（可选）" : "Gender (optional)"}
-        </label>
-        <div className="flex gap-2">
-          {(["男", "女"] as const).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGender(gender === g ? null : g)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                gender === g
-                  ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
-                  : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50 border border-mystic-700"
-              }`}
-            >
-              {g === "男" ? (lang === "zh" ? "男" : "Male") : (lang === "zh" ? "女" : "Female")}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Category selector */}
-      <div className="space-y-2">
-        <p className="text-xs text-gray-500">
-          {lang === "zh" ? "问事方向" : "Category"}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => {
-                setCategory(cat.value);
-                setResult(null);
-                setError(null);
-                setRateLimited(null);
-              }}
-              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                category === cat.value
-                  ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
-                  : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50"
-              }`}
-            >
-              {cat.emoji} {lang === "en" ? cat.labelEn : cat.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Query button */}
@@ -354,26 +203,7 @@ export default function XiaoLiuRen() {
       )}
 
       {/* Result */}
-      {result && !loading && (
-        <ResultDisplay result={result} lang={lang} memberActive={memberActive} />
-      )}
-
-      {/* Free tier upsell */}
-      {result && !memberActive && result.level === "quick" && (
-        <div className="p-4 rounded-xl bg-gold-400/5 border border-gold-400/15 text-center space-y-2">
-          <p className="text-xs text-gray-400">
-            {lang === "zh"
-              ? "以上为小六壬速断。升级会员解锁 深度全盘推演——五行生克 · 行动建议 · 个性化指导"
-              : "Quick reading shown. Upgrade to unlock deep analysis — Five Elements · Action advice · Personalized guidance"}
-          </p>
-          <button
-            onClick={handleStartTrial}
-            className="px-4 py-2 rounded-lg bg-gold-400/15 text-gold-300 text-xs font-semibold hover:bg-gold-400/25 transition-all"
-          >
-            {lang === "zh" ? "开始 7 天免费试用 →" : "Start 7-Day Free Trial →"}
-          </button>
-        </div>
-      )}
+      {result && !loading && <ResultDisplay result={result} lang={lang} />}
     </div>
   );
 }
@@ -381,25 +211,20 @@ export default function XiaoLiuRen() {
 function ResultDisplay({
   result,
   lang,
-  memberActive,
 }: {
   result: DoubaoLiurenResponse;
   lang: "zh" | "en";
-  memberActive: boolean;
 }) {
   const auspColor = AUSPICIOUSNESS_COLOR[result.auspiciousness] || "text-gray-400";
   const name = lang === "en" && result.palaceNameEn ? result.palaceNameEn : result.palaceName;
   const elem = lang === "en" && result.elementEn ? result.elementEn : result.element;
   const sym = lang === "en" && result.symbolEn ? result.symbolEn : result.symbol;
   const dir = lang === "en" && result.directionEn ? result.directionEn : result.direction;
-  const interp = lang === "en" && result.interpretationEn ? result.interpretationEn : result.interpretation;
-  const elemAnalysis = lang === "en" && result.elementAnalysisEn ? result.elementAnalysisEn : (result.elementAnalysis || "");
-  const advice = lang === "en" && result.actionAdviceEn ? result.actionAdviceEn : (result.actionAdvice || "");
-  const encourage = lang === "en" && result.encouragementEn ? result.encouragementEn : (result.encouragement || "");
+  const hasSections = result.section1_overall || result.section1_overallEn;
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Palace card */}
+      {/* Palace header card */}
       <div className="text-center space-y-2 p-4 rounded-xl bg-mystic-800/40">
         <div className="text-5xl">{result.palaceName === "大安" ? "🟢" : result.palaceName === "留连" ? "🟡" : result.palaceName === "速喜" ? "🔴" : result.palaceName === "赤口" ? "⚪" : result.palaceName === "小吉" ? "🔵" : "⚫"}</div>
         <div>
@@ -407,9 +232,6 @@ function ResultDisplay({
             {name}
             {lang === "zh" && result.palaceNameEn && (
               <span className="text-sm text-gray-400 ml-2">{result.palaceNameEn}</span>
-            )}
-            {lang === "en" && result.palaceName && result.palaceNameEn !== result.palaceName && (
-              <span className="text-sm text-gray-400 ml-2">{result.palaceName}</span>
             )}
           </h3>
           <p className={`text-sm font-semibold ${auspColor}`}>
@@ -433,37 +255,110 @@ function ResultDisplay({
         </details>
       )}
 
-      {/* Interpretation */}
-      <div className="p-4 rounded-xl bg-mystic-800/30">
-        <p className="text-gray-200 text-sm leading-relaxed">{interp}</p>
-      </div>
-
-      {/* Deep sections */}
-      {result.level === "deep" && (
+      {/* 5-section deep reading template */}
+      {hasSections && (
         <div className="space-y-3">
-          {elemAnalysis && (
-            <div className="p-4 rounded-xl bg-mystic-800/30">
-              <p className="text-xs text-gold-400 mb-2 font-medium">
-                {lang === "zh" ? "五行生克分析" : "Five Element Analysis"}
+          {(result.palaceCharacteristic || result.palaceCharacteristicEn) && (
+            <div className="p-3 rounded-xl bg-mystic-800/30 text-center">
+              <p className="text-gold-300/80 text-sm">
+                {lang === "en" && result.palaceCharacteristicEn
+                  ? result.palaceCharacteristicEn
+                  : result.palaceCharacteristic}
               </p>
-              <p className="text-gray-300 text-sm leading-relaxed">{elemAnalysis}</p>
             </div>
           )}
 
-          {advice && (
-            <div className="p-4 rounded-xl bg-gold-400/10 border border-gold-400/20">
-              <p className="text-xs text-gold-400 mb-2 font-medium">
-                {lang === "zh" ? "行动建议" : "Action Advice"}
-              </p>
-              <p className="text-gold-200 text-sm leading-relaxed">{advice}</p>
-            </div>
+          {(result.section1_overall || result.section1_overallEn) && (
+            <SectionBlock
+              number="1"
+              title={lang === "zh" ? "整体" : "Overall"}
+              content={lang === "en" && result.section1_overallEn ? result.section1_overallEn : (result.section1_overall || "")}
+              variant="default"
+            />
           )}
 
-          {encourage && (
-            <p className="text-xs text-gray-400 text-center italic">{encourage}</p>
+          {(result.section2_process || result.section2_processEn) && (
+            <SectionBlock
+              number="2"
+              title={lang === "zh" ? "过程特点" : "Process"}
+              content={lang === "en" && result.section2_processEn ? result.section2_processEn : (result.section2_process || "")}
+              variant="default"
+            />
+          )}
+
+          {(result.section3_outcome || result.section3_outcomeEn) && (
+            <SectionBlock
+              number="3"
+              title={lang === "zh" ? "结果" : "Outcome"}
+              content={lang === "en" && result.section3_outcomeEn ? result.section3_outcomeEn : (result.section3_outcome || "")}
+              variant="accent"
+            />
+          )}
+
+          {(result.section4_advice || result.section4_adviceEn) && (
+            <SectionBlock
+              number="4"
+              title={lang === "zh" ? "建议" : "Advice"}
+              content={lang === "en" && result.section4_adviceEn ? result.section4_adviceEn : (result.section4_advice || "")}
+              variant="highlight"
+            />
+          )}
+
+          {(result.oneLineSummary || result.oneLineSummaryEn) && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-gold-400/10 to-mystic-800/30 border border-gold-400/20 text-center">
+              <p className="text-xs text-gold-400/70 mb-1">
+                {lang === "zh" ? "一句话总结" : "In One Sentence"}
+              </p>
+              <p className="text-gold-200 font-medium">
+                {lang === "en" && result.oneLineSummaryEn ? result.oneLineSummaryEn : (result.oneLineSummary || "")}
+              </p>
+            </div>
           )}
         </div>
       )}
+
+      {/* Fallback: plain interpretation */}
+      {!hasSections && (
+        <div className="p-4 rounded-xl bg-mystic-800/30">
+          <p className="text-gray-200 text-sm leading-relaxed">
+            {lang === "en" && result.interpretationEn ? result.interpretationEn : result.interpretation}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionBlock({
+  number,
+  title,
+  content,
+  variant,
+}: {
+  number: string;
+  title: string;
+  content: string;
+  variant: "default" | "accent" | "highlight";
+}) {
+  const bg =
+    variant === "highlight"
+      ? "bg-gold-400/10 border border-gold-400/20"
+      : variant === "accent"
+      ? "bg-green-400/5 border border-green-400/15"
+      : "bg-mystic-800/30";
+  const numColor =
+    variant === "highlight"
+      ? "text-gold-400"
+      : variant === "accent"
+      ? "text-green-400"
+      : "text-gray-400";
+
+  return (
+    <div className={`p-4 rounded-xl ${bg} space-y-2`}>
+      <p className={`text-xs font-semibold ${numColor}`}>
+        {number}、{title}
+      </p>
+      <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-line">{content}</p>
     </div>
   );
 }
