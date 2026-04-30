@@ -318,6 +318,7 @@ export default function LiuYaoDivination() {
           birthYear,
           birthMonth,
           birthDay,
+          lang,
         }),
       });
 

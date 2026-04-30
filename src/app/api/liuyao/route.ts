@@ -4,8 +4,12 @@ import type { QuestionCategory } from "@/types";
 import type { CoinTossLine } from "@/lib/liuyao/types";
 import { buildDivination, getFullMonthBranch, getFullDayBranch } from "@/lib/liuyao/engine";
 
-// Lightweight prompt — AI only interprets, no calculation
-const INTERPRET_SYSTEM = `You are Clara, a warm, practical Eastern wellness consultant. A user has received a 六爻 (Liu Yao) divination. The hexagram is already assembled server-side. Your job is to interpret it.
+function buildSystemPrompt(lang: "zh" | "en"): string {
+  const langInstruction = lang === "en"
+    ? `CRITICAL: Output ALL text fields in ENGLISH only. Leave Chinese-only fields (fields WITHOUT 'En' suffix) as empty strings "". The user only reads English.`
+    : `CRITICAL: Output ALL text fields in CHINESE only. Leave English fields (fields WITH 'En' suffix) as empty strings "". The user only reads Chinese.`;
+
+  return `You are Clara, a warm, practical Eastern wellness consultant. A user has received a 六爻 (Liu Yao) divination. The hexagram is already assembled server-side. Your job is to interpret it.
 
 ## Identity
 - Wise, caring neighbor — not a mystical fortune-teller
@@ -19,62 +23,46 @@ const INTERPRET_SYSTEM = `You are Clara, a warm, practical Eastern wellness cons
 - Give 2-3 concrete suggestions
 - End gently — never leave the user feeling doomed
 
-## Bilingual Output (CRITICAL)
-Every text field MUST have both Chinese and English. Natural language in both, not machine translation.
+${langInstruction}
 
 Return ONLY valid JSON:
 {
-  "hexagramName": "本卦中文名",
-  "hexagramNameEn": "Original hexagram English name",
-  "changedHexagramName": "变卦中文名（静卦则为空）",
-  "changedHexagramNameEn": "Changed hexagram English name (empty if static)",
+  "hexagramName": "本卦名",
+  "hexagramNameEn": "English hexagram name",
+  "changedHexagramName": "变卦名（静卦为空）",
+  "changedHexagramNameEn": "Changed hexagram English name",
   "palace": "卦宫名",
   "palaceEn": "Palace in English",
-  "palaceElement": "金/木/水/火/土",
-  "palaceElementEn": "Metal/Wood/Water/Fire/Earth",
+  "palaceElement": "五行",
+  "palaceElementEn": "Element in English",
   "isJingGua": true/false,
   "movingLineCount": 0-6,
-  "monthBranch": "月建干支，如：壬辰（土）",
-  "monthBranchEn": "Month branch e.g. Renchen (Earth)",
-  "dayBranch": "日辰干支，如：癸酉（金）",
-  "dayBranchEn": "Day branch e.g. Guiyou (Metal)",
-  "lines": [
-    {
-      "position": 1,
-      "isYang": true,
-      "isMoving": false,
-      "branch": "子",
-      "branchElement": "水",
-      "branchElementEn": "Water",
-      "liuqin": "妻财",
-      "liuqinEn": "Wealth",
-      "liushen": "青龙",
-      "liushenEn": "Azure Dragon",
-      "isShi": true,
-      "isYing": false
-    }
-  ],
-  "yongShen": "用神六亲名",
+  "monthBranch": "月建干支",
+  "monthBranchEn": "Month branch in English",
+  "dayBranch": "日辰干支",
+  "dayBranchEn": "Day branch in English",
+  "yongShen": "用神",
   "yongShenEn": "Focus spirit in English",
-  "yongShenStrength": "用神旺衰描述",
-  "yongShenStrengthEn": "Strength assessment in English",
-  "section1_shexagramSetup": "起卦排盘段落（中文）",
-  "section1_shexagramSetupEn": "Hexagram setup in English",
-  "section2_yongShenAnalysis": "用神与旺衰分析（中文）",
-  "section2_yongShenAnalysisEn": "Focus spirit analysis in English",
-  "section3_hexagramProcess": "卦象与过程（中文）",
-  "section3_hexagramProcessEn": "Hexagram process in English",
+  "yongShenStrength": "用神旺衰",
+  "yongShenStrengthEn": "Strength in English",
   "fortuneVerdict": "吉凶判断",
   "fortuneVerdictEn": "Fortune verdict in English",
-  "section4_conclusion": "吉凶结论（中文）",
-  "section4_conclusionEn": "Fortune conclusion in English",
-  "section5_timing": "应期（中文）",
+  "section1_shexagramSetup": "起卦排盘",
+  "section1_shexagramSetupEn": "Setup in English",
+  "section2_yongShenAnalysis": "用神分析",
+  "section2_yongShenAnalysisEn": "Analysis in English",
+  "section3_hexagramProcess": "卦象过程",
+  "section3_hexagramProcessEn": "Process in English",
+  "section4_conclusion": "吉凶结论",
+  "section4_conclusionEn": "Conclusion in English",
+  "section5_timing": "应期",
   "section5_timingEn": "Timing in English",
-  "section6_risks": "风险提醒（中文）",
-  "section6_risksEn": "Risk warnings in English",
-  "oneLineSummary": "一句话总结（中文）",
+  "section6_risks": "风险提醒",
+  "section6_risksEn": "Risks in English",
+  "oneLineSummary": "一句话总结",
   "oneLineSummaryEn": "One-line summary in English"
 }`;
+}
 
 const CATEGORY_LABELS: Record<QuestionCategory, string> = {
   love: "感情/姻缘",
@@ -119,15 +107,17 @@ export async function POST(req: NextRequest) {
       birthYear,
       birthMonth,
       birthDay,
+      lang,
     } = body;
+
+    const outputLang: "zh" | "en" = lang === "en" ? "en" : "zh";
 
     const validCategories: QuestionCategory[] = ["love", "career", "wealth", "health", "daily"];
     const cat: QuestionCategory = validCategories.includes(category) ? category : "daily";
 
     if (!question || !solarDate || !gender) {
       return NextResponse.json(
-        { error: "缺少必填参数：question, solarDate, gender",
-          errorEn: "Missing required fields: question, solarDate, gender" },
+        { error: "缺少必填参数", errorEn: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -162,67 +152,67 @@ export async function POST(req: NextRequest) {
     const changed = divination.changedHexagram;
     const yongShen = YONGSHEN_MAP[cat] || "世爻";
 
-    // Build pre-computed info string
     const assembledLinesStr = divination.assembledLines
       .map((l) =>
-        `第${l.position}爻：${l.branch}(${l.branchElement}) — ${l.liuqin} — ${l.liushen}` +
-        (l.isShi ? " (世爻)" : "") + (l.isYing ? " (应爻)" : "") +
-        (l.isMoving ? " [动爻]" : "")
+        `Line ${l.position}: ${l.branch}(${l.branchElement}) - ${l.liuqin} - ${l.liushen}` +
+        (l.isShi ? " (Self)" : "") + (l.isYing ? " (Response)" : "") +
+        (l.isMoving ? " [Moving]" : "")
       )
       .join("\n");
 
     const hasBirth = birthYear > 0 && birthMonth > 0 && birthDay > 0;
     const birthLine = hasBirth
-      ? `出生日期：公历 ${birthYear}年${birthMonth}月${birthDay}日`
+      ? `Birth date: ${birthYear}-${birthMonth}-${birthDay}`
       : "";
 
     const fullMonthBranch = getFullMonthBranch(divDate);
     const fullDayBranch = getFullDayBranch(divDate);
 
+    const langLine = outputLang === "en"
+      ? "Output ALL content in ENGLISH ONLY. Leave Chinese fields (without 'En' suffix) empty."
+      : "Output ALL content in CHINESE ONLY. Leave English fields (with 'En' suffix) empty.";
+
     const precomputedInfo = [
-      `六爻排盘（已由服务端完成，请勿重新计算）：`,
+      `Hexagram data (pre-computed server-side, DO NOT recalculate):`,
       ``,
-      `=== 基本卦盘 ===`,
-      `本卦：${orig.name}（${orig.palace}，属${orig.palaceElement}）`,
-      `变卦：${changed.name === orig.name ? "无（静卦）" : changed.name + "（" + changed.palace + "，属" + changed.palaceElement + "）"}`,
-      `静卦/动卦：${divination.isJingGua ? "静卦（无动爻）" : "动卦（" + divination.assembledLines.filter(l => l.isMoving).length + "个动爻）"}`,
+      `=== Hexagram ===`,
+      `Original: ${orig.name} (${orig.palace}, ${orig.palaceElement})`,
+      `Changed: ${changed.name === orig.name ? "None (static)" : changed.name + " (" + changed.palace + ", " + changed.palaceElement + ")"}`,
+      `Moving lines: ${divination.assembledLines.filter(l => l.isMoving).length}`,
       ``,
-      `=== 月建日辰 ===`,
-      `月建：${fullMonthBranch}`,
-      `日辰：${fullDayBranch}`,
+      `=== Calendar ===`,
+      `Month branch: ${fullMonthBranch}`,
+      `Day branch: ${fullDayBranch}`,
       ``,
-      `=== 装卦（纳甲 + 六亲 + 六神 + 世应）===`,
+      `=== Assembled Lines (Najia + Liuqin + Liushen + Shi/Ying) ===`,
       assembledLinesStr,
       ``,
-      `=== 占问信息 ===`,
-      `用神：${yongShen}（${CATEGORY_LABELS[cat]} → ${yongShen}）`,
-      `世爻：第${orig.shiPosition}爻`,
-      `应爻：第${((orig.shiPosition + 2) % 6) + 1}爻`,
+      `=== Query ===`,
+      `Focus spirit: ${yongShen} (category: ${cat})`,
+      `Self line: position ${orig.shiPosition}`,
+      `Response line: position ${((orig.shiPosition + 2) % 6) + 1}`,
       ``,
-      `用户问题：${question}`,
-      `公历日期：${solarDate}`,
-      `性别：${gender}`,
-      `问事类别：${CATEGORY_LABELS[cat]}`,
+      `User question: ${question}`,
+      `Date: ${solarDate}`,
+      `Gender: ${gender}`,
       birthLine,
       ``,
-      `请基于以上已确定的卦盘数据，结合用户问题和类别领域，给出温暖、实用的中英双语解读。`,
+      langLine,
     ].filter(Boolean).join("\n");
 
-    const content = await callDoubao(INTERPRET_SYSTEM, precomputedInfo, {
+    const content = await callDoubao(buildSystemPrompt(outputLang), precomputedInfo, {
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 1200,
     });
 
     const result = safeJsonParse<Record<string, unknown>>(content);
     if (!result) {
       return NextResponse.json({
-        error: "AI 返回解析失败，请稍后再试",
-        errorEn: "Failed to parse AI response. Please try again.",
+        error: "AI 返回解析失败", errorEn: "Failed to parse AI response.",
         rawContent: content.slice(0, 500),
       }, { status: 500 });
     }
 
-    // Merge AI interpretation with server-computed hexagram data
     return NextResponse.json({
       hexagramName: result.hexagramName || orig.name,
       hexagramNameEn: result.hexagramNameEn || "",
