@@ -46,8 +46,8 @@ const T = {
   tossStepDesc: { zh: "掷下三枚硬币，记录正背面结果", en: "Toss three coins and record the result" },
   tossGuide: { zh: "如何判断结果", en: "How to read results" },
   tossGuideContent: {
-    zh: "三枚硬币掷下后，数「背面」的数量：\n0个背面（全正面）→ 老阳 ○\n1个背面 → 少阳 —\n2个背面 → 少阴 - -\n3个背面（全背面）→ 老阴 ×",
-    en: "After tossing three coins, count the number of tails:\n0 tails (all heads) → Old Yang ○\n1 tail → Yang —\n2 tails → Yin - -\n3 tails (all tails) → Old Yin ×",
+    zh: "三枚硬币掷下后，数「背面」的数量：\n0个背面（全正面）→ 老阳 ○\n1个背面 → 少阴 - -\n2个背面 → 少阳 —\n3个背面（全背面）→ 老阴 ×",
+    en: "After tossing three coins, count the number of tails:\n0 tails (all heads) → Old Yang ○\n1 tail → Yin - -\n2 tails → Yang —\n3 tails (all tails) → Old Yin ×",
   },
   hexagramReady: { zh: "卦象已成，请选择解读方式", en: "Your hexagram is ready" },
   oldYang: { zh: "老阳 ○", en: "Old Yang ○" },
@@ -214,8 +214,8 @@ type TossType = "oldYang" | "yang" | "yin" | "oldYin";
 
 const TOSS_DESC: Record<TossType, Record<Lang, string>> = {
   oldYang: { zh: "全正面 · 阳动变阴", en: "All heads · will change to yin" },
-  yang: { zh: "一背二正 · 阳不变", en: "1 tail 2 heads · stable yang" },
-  yin: { zh: "二背一正 · 阴不变", en: "2 tails 1 head · stable yin" },
+  yang: { zh: "二背一正 · 阳不变", en: "2 tails 1 head · stable yang" },
+  yin: { zh: "一背二正 · 阴不变", en: "1 tail 2 heads · stable yin" },
   oldYin: { zh: "全背面 · 阴动变阳", en: "All tails · will change to yang" },
 };
 

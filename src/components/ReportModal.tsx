@@ -507,6 +507,7 @@ export default function ReportModal({
           </div>
 
           {/* Ch.1: Basic Chart */}
+          {data.basicChart && (
           <SectionCard id="basicChart" emoji="📋" title={isZh ? "基本命盘" : "Basic Chart"}>
             <div className="grid sm:grid-cols-2 gap-3 text-sm">
               <div className="flex gap-2"><span className="text-gray-500 shrink-0">{isZh ? "公历" : "Solar"}:</span><span className="text-gray-200">{data.basicChart.solarDate}</span></div>
@@ -519,6 +520,7 @@ export default function ReportModal({
               <div className="flex gap-2"><span className="text-gray-500 shrink-0">{isZh ? "纳音" : "Nayin"}:</span><span className="text-gray-200 text-xs">{data.basicChart.nayin}</span></div>
             </div>
           </SectionCard>
+          )}
 
           {/* Ch.2: Destiny Summary */}
           <SectionCard id="destinySummary" emoji="🌏" title={isZh ? "命格总论" : "Destiny Summary"} accent>

@@ -155,13 +155,13 @@ export function tossCoins(): CoinTossLine[] {
     let isYang: boolean;
     let isMoving: boolean;
     if (backs === 0) {
-      type = "oldYin"; isYang = false; isMoving = true;
-    } else if (backs === 1) {
-      type = "yang"; isYang = true; isMoving = false;
-    } else if (backs === 2) {
-      type = "yin"; isYang = false; isMoving = false;
-    } else {
       type = "oldYang"; isYang = true; isMoving = true;
+    } else if (backs === 1) {
+      type = "yin"; isYang = false; isMoving = false;
+    } else if (backs === 2) {
+      type = "yang"; isYang = true; isMoving = false;
+    } else {
+      type = "oldYin"; isYang = false; isMoving = true;
     }
     lines.push({ position: pos, type, isYang, isMoving });
   }
