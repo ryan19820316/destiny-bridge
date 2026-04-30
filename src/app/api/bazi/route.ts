@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { year, month, day, hour, gender, lang } = body;
+    const { year, month, day, hour, gender, city, lang } = body;
 
     if (!year || !month || !day || hour === undefined || !gender) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Gender must be 'male' or 'female'" }, { status: 400 });
     }
 
-    const birthData = { year: numYear, month: numMonth, day: numDay, hour: numHour, gender };
+    const birthData = { year: numYear, month: numMonth, day: numDay, hour: numHour, gender, city: city as string | undefined };
     const baziResult = calculateBazi(birthData);
 
     // Only generate AI report if explicitly requested — keeps basic chart lookup instant

@@ -258,4 +258,5 @@ export interface BirthData {
   day: number;
   hour: number;
   gender: Gender;
+  city?: string; // birthplace city for true solar time correction
 }

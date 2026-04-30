@@ -1,7 +1,8 @@
 "use client";
 
 import { BirthData } from "@/types";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { searchCities, CityInfo } from "@/lib/solar-time";
 
 type Lang = "zh" | "en";
 
@@ -20,9 +21,12 @@ const T = {
   day: { zh: "日", en: "Day" },
   hour: { zh: "时 (0-23)", en: "Hour (0-23)" },
   hourHint: { zh: "24小时制", en: "24h" },
+  city: { zh: "出生城市", en: "Birth City" },
+  cityPlaceholder: { zh: "选择城市（用于真太阳时校正）", en: "Select city (for solar time correction)" },
+  cityNone: { zh: "不指定（跳过校正）", en: "Skip (no correction)" },
   hint: {
-    zh: "请输入你的出生时间（本地时间），系统会自动转换为八字计算所需的农历时间。",
-    en: "Enter your local birth time. We adjust it for Ba Zi calculation.",
+    zh: "出生城市用于计算真太阳时，确保时柱准确。",
+    en: "Birth city corrects clock time to true solar time for accurate hour pillar.",
   },
   consulting: { zh: "正在排盘…", en: "Consulting the Oracle..." },
   reveal: { zh: "查看我的命盘 →", en: "Reveal Your Blueprint →" },
@@ -34,7 +38,44 @@ export default function BaziForm({ onSubmit, loading, lang }: Props) {
   const [day, setDay] = useState(1);
   const [hour, setHour] = useState(12);
   const [gender, setGender] = useState<"male" | "female">("male");
+  const [city, setCity] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<CityInfo[]>([]);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const cityRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (cityRef.current && !cityRef.current.contains(e.target as Node)) {
+        setShowCityDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const handleCityInput = (q: string) => {
+    setCityQuery(q);
+    if (q.trim().length > 0) {
+      setCitySuggestions(searchCities(q, 8));
+      setShowCityDropdown(true);
+    } else {
+      setCitySuggestions([]);
+      setShowCityDropdown(true); // show top cities when empty
+    }
+  };
+
+  const selectCity = (c: CityInfo | null) => {
+    if (c) {
+      setCity(lang === "zh" ? c.nameZh : c.nameEn);
+      setCityQuery(lang === "zh" ? c.nameZh : c.nameEn);
+    } else {
+      setCity("");
+      setCityQuery("");
+    }
+    setShowCityDropdown(false);
+  };
 
   const validate = (): boolean => {
     const errs: string[] = [];
@@ -57,7 +98,7 @@ export default function BaziForm({ onSubmit, loading, lang }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit({ year, month, day, hour, gender });
+    onSubmit({ year, month, day, hour, gender, city: city || undefined });
   };
 
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -155,6 +196,43 @@ export default function BaziForm({ onSubmit, loading, lang }: Props) {
             ))}
           </select>
         </div>
+      </div>
+
+      {/* City autocomplete */}
+      <div ref={cityRef} className="relative">
+        <label className="block text-sm font-medium text-gray-300 mb-1">{T.city[lang]}</label>
+        <input
+          type="text"
+          value={cityQuery}
+          onChange={(e) => handleCityInput(e.target.value)}
+          onFocus={() => setShowCityDropdown(true)}
+          placeholder={T.cityPlaceholder[lang]}
+          className="w-full py-3 px-4 rounded-xl bg-mystic-800/80 border border-mystic-600 text-white placeholder-gray-500 transition-all focus:outline-none focus:border-gold-400"
+        />
+        {showCityDropdown && (
+          <div className="absolute z-20 w-full mt-1 rounded-xl bg-mystic-800 border border-mystic-600 shadow-xl max-h-56 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => selectCity(null)}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-mystic-700/50 transition-colors"
+            >
+              {T.cityNone[lang]}
+            </button>
+            {(cityQuery.trim() ? citySuggestions : searchCities("", 8)).map((c) => (
+              <button
+                key={c.nameEn}
+                type="button"
+                onClick={() => selectCity(c)}
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-mystic-700/50 hover:text-gold-300 transition-colors flex justify-between items-center"
+              >
+                <span>{lang === "zh" ? c.nameZh : c.nameEn}</span>
+                <span className="text-xs text-gray-500">
+                  {c.longitude > 0 ? `${c.longitude.toFixed(1)}°E` : `${(-c.longitude).toFixed(1)}°W`}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="text-xs text-gray-500">{T.hint[lang]}</p>

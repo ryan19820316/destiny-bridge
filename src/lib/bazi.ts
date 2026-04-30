@@ -1,4 +1,5 @@
 import { BirthData, BaziChart, BaziResult, Branch, Element, FiveElementsCount, Gender, Pillar, Stem, TenGod, TenGodResult } from "@/types";
+import { getTrueSolarHour } from "./solar-time";
 
 // ---- CONSTANTS ----
 const STEMS: Stem[] = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
@@ -159,20 +160,22 @@ function getMonthPillar(yearStemIdx: number, m: number, d: number): Pillar {
 
 // ---- HOUR PILLAR ----
 // 2-hour blocks: 子(23-01), 丑(01-03), 寅(03-05)... 亥(21-23)
+// Accepts float for true solar hour (e.g. 12.7 → 午, 12.3 → 午)
 function getHourBranchIndex(hour: number): number {
-  // Map 0-23 hour to branch index
-  if (hour === 23 || hour === 0) return 0; // 子
-  if (hour === 1 || hour === 2) return 1;  // 丑
-  if (hour === 3 || hour === 4) return 2;  // 寅
-  if (hour === 5 || hour === 6) return 3;  // 卯
-  if (hour === 7 || hour === 8) return 4;  // 辰
-  if (hour === 9 || hour === 10) return 5; // 巳
-  if (hour === 11 || hour === 12) return 6; // 午
-  if (hour === 13 || hour === 14) return 7; // 未
-  if (hour === 15 || hour === 16) return 8; // 申
-  if (hour === 17 || hour === 18) return 9; // 酉
-  if (hour === 19 || hour === 20) return 10; // 戌
-  return 11; // 亥 (21-22)
+  const h = ((hour % 24) + 24) % 24; // normalize to [0, 24)
+  // Map by the 2-hour block
+  if (h >= 23 || h < 1) return 0;  // 子
+  if (h >= 1 && h < 3) return 1;   // 丑
+  if (h >= 3 && h < 5) return 2;   // 寅
+  if (h >= 5 && h < 7) return 3;   // 卯
+  if (h >= 7 && h < 9) return 4;   // 辰
+  if (h >= 9 && h < 11) return 5;  // 巳
+  if (h >= 11 && h < 13) return 6; // 午
+  if (h >= 13 && h < 15) return 7; // 未
+  if (h >= 15 && h < 17) return 8; // 申
+  if (h >= 17 && h < 19) return 9; // 酉
+  if (h >= 19 && h < 21) return 10;// 戌
+  return 11; // 亥 (21-23)
 }
 
 // Hour stem depends on day stem
@@ -338,14 +341,17 @@ function calculateTenGods(chart: BaziChart): TenGodResult[] {
 
 // ---- MAIN CALCULATION ----
 export function calculateBazi(data: BirthData): BaziResult {
-  const { year, month, day, hour, gender } = data;
+  const { year, month, day, hour, gender, city } = data;
+
+  // Apply true solar time correction when city is provided
+  const solarHour = city ? getTrueSolarHour(hour, city, month, day) : hour;
 
   const yearPillar = getYearPillar(year, month, day);
   const yearStemIdx = STEMS.indexOf(yearPillar.stem);
   const monthPillar = getMonthPillar(yearStemIdx, month, day);
   const dayPillar = getDayPillar(year, month, day);
   const dayStemIdx = STEMS.indexOf(dayPillar.stem);
-  const hourPillar = getHourPillar(dayStemIdx, hour);
+  const hourPillar = getHourPillar(dayStemIdx, solarHour);
 
   const chart: BaziChart = {
     year: yearPillar,
@@ -380,7 +386,7 @@ export function formatChartForAI(result: BaziResult, birthData: BirthData): stri
   return `## User's Bazi Chart
 
 **Birth Date:** ${birthData.year}-${birthData.month}-${birthData.day} ${birthData.hour}:00
-**Gender:** ${birthData.gender === "male" ? "Male" : "Female"}
+**Gender:** ${birthData.gender === "male" ? "Male" : "Female"}${birthData.city ? `\n**Birth City:** ${birthData.city} (true solar time applied)` : ""}
 
 ### Four Pillars
 | Pillar | Stem-Branch | Hidden Stems |
