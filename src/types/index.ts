@@ -33,7 +33,7 @@ export interface TenGodResult {
 
 // ---- Ba Zi Holistic Report (one-time purchase) ----
 export interface BaziReport {
-  basicChart: {
+  basicChart?: {
     solarDate: string;
     lunarDate: string;
     fourPillars: string;

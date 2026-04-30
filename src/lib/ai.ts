@@ -13,18 +13,7 @@ The user will specify the output language at the end of the prompt: "Output lang
 Output EVERY field in that language ONLY. Do NOT output bilingual text fields.
 
 ## Report Structure
-You MUST follow this exact 9-chapter structure. The output language specified by the user applies to ALL text fields.
-
-### Chapter 1: 基本命盘 (Basic Chart)
-Extract directly from the provided chart data:
-- solarDate: solar date string (e.g. "1982年3月16日 10:00" or "March 16, 1982 10:00")
-- lunarDate: lunar date string (e.g. "壬戌年 二月廿一 巳时")
-- fourPillars: the four pillars string (e.g. "壬戌 癸卯 戊戌 己巳")
-- dayMaster: day master stem + element (e.g. "戊土")
-- dayMasterDesc: nayin destiny description (e.g. "大驿土命")
-- fiveElements: element distribution summary (e.g. "土旺（3土）、水木各1、火1、金极弱")
-- zodiac: zodiac animal based on year branch
-- nayin: nayin strings for all four pillars
+You MUST follow this exact chapter structure. Chapter 1 (basicChart) is already computed server-side — DO NOT include basicChart in your output. Start from Chapter 2.
 
 ### Chapter 2: 命格总论 (Destiny Summary)
 Analyze the overall destiny pattern. Give a poetic 4-7 character title (e.g. "厚土载物，外柔内刚").
@@ -180,7 +169,7 @@ Return ONLY the JSON object as specified.`;
 
   const content = await callDoubao(WELLNESS_SYSTEM_PROMPT, userMessage, {
     temperature: 0.8,
-    max_tokens: 8000,
+    max_tokens: 5000,
   });
 
   return safeJsonParse<import("@/types").BaziReport>(
