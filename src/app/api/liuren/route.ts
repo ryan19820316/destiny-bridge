@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     const content = await callDoubao(systemPrompt, userMessage, {
       temperature: 0.8,
-      max_tokens: 2000,
+      max_tokens: 1200,
     });
 
     const result = safeJsonParse<Record<string, unknown>>(content);
