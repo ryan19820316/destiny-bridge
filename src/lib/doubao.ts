@@ -12,6 +12,7 @@ export async function callDoubao(
   userMessage: string,
   options?: DoubaoOptions
 ): Promise<string> {
+  const t0 = Date.now();
   const apiKey = getEnv("DOUBAO_API_KEY");
   if (!apiKey) throw new Error("DOUBAO_API_KEY is not configured");
   const baseUrl = getEnv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3");
@@ -26,6 +27,9 @@ export async function callDoubao(
     temperature: options?.temperature ?? 0.7,
     max_tokens: options?.max_tokens ?? 2000,
   };
+
+  const inputChars = systemPrompt.length + userMessage.length;
+  console.log(`[Doubao] calling ${model} | prompt: ${inputChars} chars | max_tokens: ${body.max_tokens}`);
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
@@ -43,6 +47,9 @@ export async function callDoubao(
 
   const data = await response.json();
   const content: string = data.choices?.[0]?.message?.content || "";
+  const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+  const outChars = content.length;
+  console.log(`[Doubao] done in ${elapsed}s | output: ${outChars} chars`);
   return content.trim();
 }
 
