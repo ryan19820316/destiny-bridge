@@ -1,56 +1,63 @@
 /**
- * 三模型对比测试 v2 — 服务端统一算宫位，AI 只解读
+ * 三模型对比测试 — 六爻版
+ * 服务端统一装卦，AI 只解读
  *
  * 用法：
- *   npx tsx scripts/compare-models.ts
- *
- * 前置条件：
- *   .env.local 中添加：
- *   DEEPSEEK_API_KEY=sk-xxx
- *   QWEN_API_KEY=sk-xxx
- *   DOUBAO_API_KEY=sk-xxx
+ *   npx tsx scripts/compare-models-liuyao.ts
  */
 
-import { calculateXiaoLiuRen, PALACE_DATA } from "../src/lib/liuren";
+import { buildDivination } from "../src/lib/liuyao/engine";
+import type { CoinTossLine } from "../src/lib/liuyao/types";
 
 const TEST_QUESTION = "我今天去面试顺利吗？";
 const TEST_DATE = "2026-04-30";
-const TEST_TIME = "14:30";
 const TEST_GENDER = "female";
 
-// Pre-compute Xiao Liu Ren deterministically
-const [y, m, d] = TEST_DATE.split("-").map(Number);
-const [hh, mm] = TEST_TIME.split(":").map(Number);
-const calcDate = new Date(y, m - 1, d, hh, mm);
-const divination = calculateXiaoLiuRen(calcDate);
-const palace = divination.palace;
+// Simulated coin toss lines
+const testLines: CoinTossLine[] = [
+  { position: 1, type: "yang", isYang: true, isMoving: false },
+  { position: 2, type: "yin", isYang: false, isMoving: false },
+  { position: 3, type: "oldYang", isYang: true, isMoving: true },
+  { position: 4, type: "yin", isYang: false, isMoving: false },
+  { position: 5, type: "yang", isYang: true, isMoving: false },
+  { position: 6, type: "oldYin", isYang: false, isMoving: true },
+];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  love: "感情/爱情", family: "家庭/孩子", health: "健康/身体",
-  career: "事业/工作", daily: "日常/综合运势", wealth: "财运/钱财",
-};
+const [y, m, d] = TEST_DATE.split("-").map(Number);
+const divination = buildDivination(testLines, new Date(y, m - 1, d));
+const orig = divination.originalHexagram;
+const changed = divination.changedHexagram;
+
+// Build pre-computed info (same as API route)
+const assembledLinesStr = divination.assembledLines
+  .map((l) =>
+    `第${l.position}爻：${l.branch}(${l.branchElement}) — ${l.liuqin} — ${l.liushen}` +
+    (l.isShi ? " (世爻)" : "") + (l.isYing ? " (应爻)" : "") +
+    (l.isMoving ? " [动爻]" : "")
+  )
+  .join("\n");
 
 const precomputedInfo = [
-  `小六壬推算结果（已确定，请勿重新计算）：`,
-  `- 掌诀：${palace.name}（第${divination.palaceIndex}宫）`,
-  `- 吉凶：${palace.auspiciousness}`,
-  `- 五行：${palace.element}`,
-  `- 神兽：${palace.symbol}`,
-  `- 方向：${palace.direction}`,
-  `- 颜色：${palace.color}`,
-  `- 核心特征：${palace.classicVerse}`,
-  `- 此宫在"${CATEGORY_LABELS.career}"领域的参考：${palace.domains.career}`,
+  `六爻排盘（已由服务端完成，请勿重新计算）：`,
+  ``,
+  `本卦：${orig.name}（${orig.palace}，属${orig.palaceElement}）`,
+  `变卦：${changed.name === orig.name ? "无（静卦）" : changed.name}`,
+  `动爻数：${divination.assembledLines.filter(l => l.isMoving).length}`,
+  `月建：${divination.monthBranch}`,
+  `日辰：${divination.dayStem}${divination.dayBranch}`,
+  ``,
+  `=== 装卦 ===`,
+  assembledLinesStr,
   ``,
   `用户问题：${TEST_QUESTION}`,
-  `公历日期：${TEST_DATE}`,
-  `时间：${TEST_TIME}`,
+  `日期：${TEST_DATE}`,
   `性别：${TEST_GENDER}`,
-  `问事方向：${CATEGORY_LABELS.career}`,
+  `问事：事业/工作 → 用神：官鬼`,
   ``,
-  `请基于以上已确定的掌诀结果，给出30字以内的解读和建议（中文即可）。`,
+  `请给出30字以内的中文解读。`,
 ].join("\n");
 
-const SYSTEM_PROMPT = `你是东方命理顾问 Clara。用户的掌诀已由服务端算好，你只负责解读。输出简短中文。`;
+const SYSTEM_PROMPT = `你是东方命理顾问 Clara。卦盘已由服务端装好，你只负责解读。输出简短中文。`;
 
 interface ModelConfig {
   name: string;
@@ -81,7 +88,7 @@ async function callModel(config: ModelConfig): Promise<TestResult> {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: precomputedInfo },
         ],
-        temperature: 0.8,
+        temperature: 0.7,
         max_tokens: 300,
       }),
     });
@@ -151,11 +158,11 @@ async function main() {
     return;
   }
 
-  // Deterministic palace — same for all
+  const movingCount = divination.assembledLines.filter(l => l.isMoving).length;
   console.log(`\n📋 测试问题：${TEST_QUESTION}`);
-  console.log(`📅 参数：${TEST_DATE} ${TEST_TIME} ${TEST_GENDER}`);
-  console.log(`🔮 服务端算定：${palace.name} | ${palace.auspiciousness} | ${palace.element} | ${palace.symbol}`);
-  console.log(`📐 计算：${divination.lunarDateStr} + ${divination.timeZhi}时 → 第${divination.palaceIndex}宫\n`);
+  console.log(`📅 参数：${TEST_DATE} ${TEST_GENDER}`);
+  console.log(`🔮 服务端装卦：${orig.name} → ${changed.name !== orig.name ? changed.name : "静卦"} | ${orig.palace} | 动爻${movingCount}个`);
+  console.log(`📐 月建：${divination.monthBranch} | 日辰：${divination.dayStem}${divination.dayBranch}\n`);
   console.log("=".repeat(60));
 
   const results = await Promise.all(active.map((m) => callModel(m)));
@@ -171,7 +178,6 @@ async function main() {
     console.log("—".repeat(40));
   }
 
-  // Speed ranking
   console.log("\n🏆 速度排名：");
   results
     .filter((r) => !r.error)

@@ -1,4 +1,4 @@
-/** @deprecated Liu Yao 装卦 moved to Doubao API. See src/lib/liuyao-prompt.ts */
+// Liu Yao (六爻) hexagram assembly — server-side, deterministic
 import type { Stem, Branch, Element } from "@/types";
 import {
   CoinTossLine,
@@ -93,11 +93,9 @@ function getXunKong(dayStem: Stem, dayBranch: Branch): Branch[] {
 }
 
 // ---- 日期干支计算 ----
-function getCurrentDayStemBranch(): { stem: Stem; branch: Branch } {
-  const now = new Date();
-  // Base: 2026-01-01 = 乙未日 (day 2, branch 8)
-  // Use a known anchor: 2024-01-01 = 甲子日
-  const anchor = new Date(2024, 0, 1); // Jan 1, 2024
+function getCurrentDayStemBranch(date?: Date): { stem: Stem; branch: Branch } {
+  const now = date || new Date();
+  const anchor = new Date(2024, 0, 1); // Jan 1, 2024 = 甲子日
   const anchorStemIdx = 0; // 甲
   const anchorBranchIdx = 0; // 子
   const diffDays = Math.floor((now.getTime() - anchor.getTime()) / (1000 * 60 * 60 * 24));
@@ -106,14 +104,41 @@ function getCurrentDayStemBranch(): { stem: Stem; branch: Branch } {
   return { stem: STEMS[stemIdx], branch: BRANCHES[branchIdx] };
 }
 
-function getMonthBranch(): Branch {
-  // Lunar month approx: month branch by 节气 (simplified: solar month + 1)
-  // 正月寅, 二月卯, ...
-  const now = new Date();
+function getMonthBranch(date?: Date): Branch {
+  const now = date || new Date();
   const month = now.getMonth() + 1; // 1-12
-  // Approximate: 立春 ~Feb 4, so months 1-2 = 寅, 3-4 = 卯, etc.
   const branchIdx = (month + 1) % 12;
-  return BRANCHES[branchIdx === 0 ? 11 : branchIdx - 1]; // simplified mapping
+  return BRANCHES[branchIdx === 0 ? 11 : branchIdx - 1];
+}
+
+// 年上起月法：五虎遁
+// Solar month → 寅月-index (寅=1)
+function getMonthStem(year: number, solarMonth: number): Stem {
+  // 甲己之年丙作首，乙庚之岁戊为头
+  // 丙辛必定寻庚起，丁壬壬位顺行流，戊癸甲寅好追求
+  const yearStemIdx = ((year - 4) % 10 + 10) % 10;
+  const firstStems = [2, 4, 6, 8, 0]; // 甲→丙(2), 乙→戊(4), 丙→庚(6), 丁→壬(8), 戊→甲(0)
+  const firstStem = firstStems[yearStemIdx % 5] ?? 0;
+  // Convert solar month to 寅-index: 寅月≈Feb, so (solarMonth + 11) % 12, 0→12
+  const yinIndex = (solarMonth + 11) % 12 || 12;
+  const monthStemIdx = (firstStem + yinIndex - 1) % 10;
+  return STEMS[monthStemIdx];
+}
+
+export function getFullMonthBranch(date?: Date): string {
+  const now = date || new Date();
+  const solarMonth = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const stem = getMonthStem(year, solarMonth);
+  const branch = getMonthBranch(date);
+  const el = BRANCH_ELEMENT[branch];
+  return `${stem}${branch}（${el}）`;
+}
+
+export function getFullDayBranch(date?: Date): string {
+  const { stem, branch } = getCurrentDayStemBranch(date);
+  const el = BRANCH_ELEMENT[branch];
+  return `${stem}${branch}（${el}）`;
 }
 
 // ---- 起卦 ----
@@ -144,7 +169,7 @@ export function tossCoins(): CoinTossLine[] {
 }
 
 // ---- 卦象匹配 ----
-export function buildDivination(lines?: CoinTossLine[]): DivinationResult {
+export function buildDivination(lines?: CoinTossLine[], date?: Date): DivinationResult {
   const coinLines = lines || tossCoins();
 
   // Build binary for 本卦 (original hexagram)
@@ -166,8 +191,8 @@ export function buildDivination(lines?: CoinTossLine[]): DivinationResult {
   const isJingGua = !hasMovingLines;
 
   // 日辰 & 月建
-  const { stem: dayStem, branch: dayBranch } = getCurrentDayStemBranch();
-  const monthBranch = getMonthBranch();
+  const { stem: dayStem, branch: dayBranch } = getCurrentDayStemBranch(date);
+  const monthBranch = getMonthBranch(date);
 
   // 空亡
   const kongWangBranches = getXunKong(dayStem, dayBranch);
