@@ -19,39 +19,6 @@ body {
   color: #e8e0f0;
 }
 
-/* ===== Bagua Background Pattern ===== */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.025;
-  background-image:
-    radial-gradient(circle at 20% 20%, #d4a853 1px, transparent 1px),
-    radial-gradient(circle at 80% 40%, #d4a853 1px, transparent 1px),
-    radial-gradient(circle at 50% 70%, #d4a853 1px, transparent 1px),
-    radial-gradient(circle at 70% 90%, #5b9a8b 1px, transparent 1px),
-    radial-gradient(circle at 10% 60%, #5b9a8b 1px, transparent 1px);
-  background-size: 120px 120px, 160px 160px, 140px 140px, 180px 180px, 130px 130px;
-}
-
-/* Subtle trigram watermark — only visible on wide screens */
-@media (min-width: 768px) {
-  body::after {
-    content: "☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷";
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    font-size: 2.5rem;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.03;
-    writing-mode: vertical-rl;
-    letter-spacing: 0.5em;
-    color: #d4a853;
-  }
-}
 
 /* ===== Animations ===== */
 @keyframes fadeInUp {
