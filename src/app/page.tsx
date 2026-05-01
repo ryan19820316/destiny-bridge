@@ -1,187 +1,235 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { BaziResult, BirthData } from "@/types";
-import { updateProfile, getProfile } from "@/lib/profile";
-import { savePendingPurchase, createGumroadCheckout, PRICING } from "@/lib/payment";
+import { useState, useEffect, useRef } from "react";
+import { getProfile } from "@/lib/profile";
+import type { LiuYaoFormData, LiuYaoResult } from "@/types";
 import Hero from "@/components/Hero";
-import BaziForm from "@/components/BaziForm";
-import ReportModal from "@/components/ReportModal";
-import VentChat from "@/components/VentChat";
-import XiaoLiuRen from "@/components/XiaoLiuRen";
-import LiuYaoDivination from "@/components/LiuYaoDivination";
+import LiuYaoForm from "@/components/LiuYaoForm";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Footer from "@/components/Footer";
 
 type Lang = "zh" | "en";
 
-const ELEMENT_EMOJI: Record<string, string> = {
-  木: "🌿", 火: "🔥", 土: "🏔️", 金: "✨", 水: "💧",
+const LIUQIN_ICONS: Record<string, string> = {
+  "父母": "📚", "官鬼": "⚖️", "妻财": "💰",
+  "子孙": "👶", "兄弟": "🤝",
 };
 
-const PILLAR_LABEL: Record<string, Record<Lang, string>> = {
-  year: { zh: "年", en: "Year" },
-  month: { zh: "月", en: "Month" },
-  day: { zh: "日", en: "Day" },
-  hour: { zh: "时", en: "Hour" },
+const LIUQIN_EN: Record<string, string> = {
+  "父母": "Parents", "官鬼": "Officer", "妻财": "Wealth",
+  "子孙": "Children", "兄弟": "Siblings",
 };
 
-function BaziPreview({ result, birthData, lang }: { result: BaziResult; birthData: BirthData; lang: Lang }) {
-  const { chart, elements, dayMaster, favorableElements, unfavorableElements, tenGods } = result;
+const LIUSHEN_EN: Record<string, string> = {
+  "青龙": "Azure Dragon", "朱雀": "Vermilion Bird", "勾陈": "Stagnation",
+  "腾蛇": "Flying Serpent", "白虎": "White Tiger", "玄武": "Black Tortoise",
+};
 
+function ResultDisplay({ result, lang }: { result: LiuYaoResult; lang: Lang }) {
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="text-center">
-        <p className="text-xs text-gold-400 uppercase tracking-widest mb-2">
-          {lang === "zh" ? "命理八字" : "Ba Zi · Four Pillars"}
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <p className="text-xs text-gold-400 uppercase tracking-widest">
+          {lang === "zh" ? "六爻测算结果" : "Liu Yao Divination Result"}
         </p>
-        <h2 className="text-2xl font-bold mb-1">
-          <span className="gold-text">{lang === "zh" ? "四柱八字" : "Four Pillars Chart"}</span>
+        <h2 className="text-2xl font-bold">
+          <span className="gold-text">{result.hexagramName}</span>
         </h2>
-        <p className="text-gray-400 text-sm">
-          {birthData.year}-{String(birthData.month).padStart(2, "0")}-
-          {String(birthData.day).padStart(2, "0")}
-          {" · "}{birthData.gender === "male" ? "♂" : "♀"}
+        {result.changedHexagramName && (
+          <p className="text-gold-300 text-sm">
+            {lang === "zh" ? "变卦" : "Changed →"} {result.changedHexagramName}
+          </p>
+        )}
+        <p className="text-gray-500 text-xs">
+          {result.palace} · {result.palaceElement} · {result.monthBranch} · {result.dayBranch}
+          {result.isJingGua && ` · ${lang === "zh" ? "静卦" : "Static"}`}
         </p>
       </div>
 
-      <div className="mystic-card rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-4 text-center text-sm">
-          {(["year", "month", "day", "hour"] as const).map((p) => (
-            <div key={p} className="p-3 border-r border-mystic-700/50 last:border-r-0">
-              <p className="text-gray-500 text-xs mb-1">{PILLAR_LABEL[p][lang]}</p>
-              <p className="text-xl font-bold text-white">
-                {chart[p].stem}{chart[p].branch}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {ELEMENT_EMOJI[chart[p].stemElement]}{chart[p].stemElement}
-                {" + "}
-                {ELEMENT_EMOJI[chart[p].branchElement]}{chart[p].branchElement}
-              </p>
-              <p className="text-xs text-gray-600 mt-0.5">
-                {chart[p].hiddenStems.join(" ")}
-              </p>
-            </div>
-          ))}
-        </div>
+      {/* Fortune verdict */}
+      <div className="mystic-card rounded-2xl p-5 text-center">
+        <p className="text-lg font-bold text-gold-300">{result.fortuneVerdict}</p>
+        {result.oneLineSummary && (
+          <p className="text-sm text-gray-400 mt-2 italic">"{result.oneLineSummary}"</p>
+        )}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="mystic-card rounded-2xl p-4 text-center">
-          <p className="text-xs text-gray-500 mb-1">
-            {lang === "zh" ? "日主" : "Day Master"}
-          </p>
-          <p className="text-3xl font-bold text-white">
-            {dayMaster.stem}
-            <span className="text-lg ml-1 text-gray-400">({ELEMENT_EMOJI[dayMaster.element]}{dayMaster.element})</span>
-          </p>
-          <p className="text-xs text-gray-500 mt-1">{dayMaster.strength}</p>
+      {/* Lines table */}
+      <div className="mystic-card rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-7 text-xs text-gray-500 border-b border-mystic-700/50 bg-mystic-800/30">
+          <div className="p-2 text-center">{lang === "zh" ? "爻" : "Pos"}</div>
+          <div className="p-2 text-center">{lang === "zh" ? "阴阳" : "Y/Y"}</div>
+          <div className="p-2 text-center">{lang === "zh" ? "地支" : "Branch"}</div>
+          <div className="p-2 text-center">{lang === "zh" ? "六亲" : "Liu Qin"}</div>
+          <div className="p-2 text-center">{lang === "zh" ? "六神" : "Liu Shen"}</div>
+          <div className="p-2 text-center">{lang === "zh" ? "世应" : "S/Y"}</div>
+          <div className="p-2 text-center">{lang === "zh" ? "动" : "Mov"}</div>
         </div>
-        <div className="mystic-card rounded-2xl p-4 text-center">
-          <p className="text-xs text-gray-500 mb-1">
-            {lang === "zh" ? "五行分布" : "Five Elements"}
-          </p>
-          <div className="flex justify-center gap-3 text-lg">
-            {(Object.keys(elements) as Array<keyof typeof elements>).map((el) => (
-              <span key={el} className="text-sm">
-                {ELEMENT_EMOJI[el]}
-                <span className="text-gray-300 ml-0.5">{elements[el]}</span>
+        {[...result.lines].reverse().map((l) => (
+          <div
+            key={l.position}
+            className={`grid grid-cols-7 text-sm border-b border-mystic-700/30 last:border-0 ${
+              l.isShi ? "bg-gold-400/5" : l.isYing ? "bg-jade-400/5" : ""
+            } ${l.isMoving ? "bg-gold-400/10" : ""}`}
+          >
+            <div className="p-2.5 text-center text-gray-300">{l.position}</div>
+            <div className="p-2.5 text-center">{l.isYang ? "⚊" : "⚋"}{l.isMoving ? "○" : ""}</div>
+            <div className="p-2.5 text-center text-gray-300">
+              {l.branch}
+              <span className="text-xs text-gray-500 ml-0.5">({l.branchElement})</span>
+            </div>
+            <div className="p-2.5 text-center text-gray-300">
+              {lang === "zh" ? l.liuqin : LIUQIN_EN[l.liuqin] || l.liuqin}
+            </div>
+            <div className="p-2.5 text-center text-gray-400 text-xs">
+              {lang === "zh" ? l.liushen : LIUSHEN_EN[l.liushen] || l.liushen}
+            </div>
+            <div className="p-2.5 text-center text-sm">
+              {l.isShi && <span className="text-gold-400">{lang === "zh" ? "世" : "S"}</span>}
+              {l.isYing && <span className="text-jade-400">{lang === "zh" ? "应" : "R"}</span>}
+            </div>
+            <div className="p-2.5 text-center">
+              {l.isMoving && <span className="text-gold-400 font-bold">○</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Yong Shen */}
+      <div className="mystic-card rounded-2xl p-4 text-center">
+        <p className="text-xs text-gray-500 mb-1">{lang === "zh" ? "用神" : "Focus Spirit"}</p>
+        <p className="text-gold-300 font-bold text-lg">{result.yongShen}</p>
+        {result.yongShenStrength && (
+          <p className="text-sm text-gray-400 mt-1">{result.yongShenStrength}</p>
+        )}
+      </div>
+
+      {/* Interpretation sections */}
+      <div className="space-y-4">
+        {([
+          { key: "section1_hexagramSetup" as const, labelZh: "起卦排盘", labelEn: "Hexagram Setup" },
+          { key: "section2_yongShenAnalysis" as const, labelZh: "用神分析", labelEn: "Focus Spirit Analysis" },
+          { key: "section3_hexagramProcess" as const, labelZh: "卦象过程", labelEn: "Hexagram Process" },
+          { key: "section4_conclusion" as const, labelZh: "吉凶结论", labelEn: "Conclusion" },
+          { key: "section5_timing" as const, labelZh: "应期", labelEn: "Timing" },
+          { key: "section6_risks" as const, labelZh: "风险提醒", labelEn: "Risks & Cautions" },
+        ] as const).map(({ key, labelZh, labelEn }) => {
+          const content = result[key] as string;
+          if (!content) return null;
+          return (
+            <div key={key} className="mystic-card rounded-2xl p-5">
+              <h3 className="text-sm font-semibold text-gold-400 mb-3">
+                {lang === "zh" ? labelZh : labelEn}
+              </h3>
+              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Personality traits section */}
+      {(result.yinyaoTraits.length > 0 || result.yinyaoAdvice) && (
+        <div className="mystic-card rounded-2xl p-5 border border-gold-400/20">
+          <h3 className="text-sm font-semibold text-gold-400 mb-3">
+            {lang === "zh" ? "性格分析" : "Personality Analysis"}
+          </h3>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {result.yinyaoTraits.map((t: string, i: number) => (
+              <span key={i} className="px-2 py-0.5 rounded-full text-xs bg-gold-400/10 text-gold-300 border border-gold-400/20">
+                {t}
               </span>
             ))}
           </div>
-          <div className="flex justify-center gap-4 mt-2 text-xs">
-            <span className="text-green-400">
-              {lang === "zh" ? "喜" : "Like"}: {favorableElements.map(e => ELEMENT_EMOJI[e] + e).join(", ")}
-            </span>
-            <span className="text-red-400">
-              {lang === "zh" ? "忌" : "Avoid"}: {unfavorableElements.map(e => ELEMENT_EMOJI[e] + e).join(", ")}
-            </span>
-          </div>
+          {result.yinyaoAdvice && (
+            <p className="text-gray-300 text-sm leading-relaxed italic border-t border-mystic-700/50 pt-3 mt-2">
+              {result.yinyaoAdvice}
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
-      <div className="mystic-card rounded-2xl p-4">
-        <p className="text-xs text-gray-500 mb-2 text-center">
-          {lang === "zh" ? "十神" : "Ten Gods"}
-        </p>
-        <div className="flex justify-center gap-4 text-sm">
-          {tenGods.map((tg) => (
-            <div key={tg.pillar} className="text-center">
-              <p className="text-xs text-gray-500">{PILLAR_LABEL[tg.pillar][lang]}</p>
-              <p className="text-gold-300 font-medium">{tg.god}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Blurred report preview using ReportModal with sample data
-function ReportPreview({ lang }: { lang: "zh" | "en" }) {
-  return (
-    <div className="relative">
-      <div className="mystic-card rounded-2xl overflow-hidden blur-sm pointer-events-none select-none" style={{ maxHeight: "500px" }}>
-        <ReportModal lang={lang} />
-      </div>
-      {/* CTA overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-mystic-950/60 backdrop-blur-[1px] rounded-2xl">
-        <div className="text-center space-y-3 p-8">
-          <p className="text-2xl">🔒</p>
-          <p className="text-white font-bold text-lg">
-            {lang === "zh" ? "付费后解锁完整报告" : "Purchase to Unlock Full Report"}
-          </p>
-          <p className="text-gray-400 text-sm max-w-sm">
-            {lang === "zh"
-              ? "9大章节完整命理分析，含未来十年逐年预测"
-              : "9-chapter complete Ba Zi analysis with 10-year yearly forecast"}
-          </p>
-        </div>
-      </div>
+      {/* Timestamp */}
+      <p className="text-center text-xs text-gray-600">
+        {new Date(result.timestamp).toLocaleString()}
+      </p>
     </div>
   );
 }
 
 export default function Home() {
-  const [birthData, setBirthData] = useState<BirthData | null>(null);
-  const [result, setResult] = useState<BaziResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"vent" | "liuren" | "liuyao">("liuyao");
-  const [showReportSection, setShowReportSection] = useState(false);
   const [lang, setLang] = useState<Lang>("en");
-  const [userEmail, setUserEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<LiuYaoResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const lastFormDataRef = useRef<LiuYaoFormData | null>(null);
+  const langResultCache = useRef<Record<string, LiuYaoResult>>({});
 
   useEffect(() => {
     const p = getProfile();
     setLang(p.languagePreference === "en" ? "en" : "zh");
+    setMounted(true);
   }, []);
 
-  const handleSubmit = async (data: BirthData) => {
+  const handleLangToggle = (newLang: Lang) => {
+    setLang(newLang);
+    if (result && lastFormDataRef.current) {
+      const cached = langResultCache.current[newLang];
+      if (cached) {
+        setResult(cached);
+      } else {
+        handleSubmit(lastFormDataRef.current, newLang);
+      }
+    }
+  };
+
+  const handleSubmit = async (data: LiuYaoFormData, forceLang?: Lang) => {
+    const submitLang = forceLang ?? lang;
+    const isNew = !forceLang;
+    lastFormDataRef.current = data;
     setLoading(true);
     setError(null);
-    setResult(null);
-    setBirthData(data);
-
-    updateProfile({ baziData: data });
+    if (isNew) {
+      setResult(null);
+      langResultCache.current = {};
+    }
 
     try {
-      const res = await fetch("/api/bazi", {
+      const res = await fetch("/api/liuyao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, generateAI: false }),
+        body: JSON.stringify({ ...data, lang: submitLang }),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Something went wrong");
       }
-      const baziResult: BaziResult = await res.json();
-      setResult(baziResult);
-      setTimeout(() => {
-        document.getElementById("report-section")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 200);
+      const liuyaoResult: LiuYaoResult = await res.json();
+      setResult(liuyaoResult);
+      langResultCache.current[submitLang] = liuyaoResult;
+
+      if (isNew) {
+        setTimeout(() => {
+          document.getElementById("result-section")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 200);
+
+        // Pre-fetch the other language in background for instant switching
+        const otherLang: Lang = submitLang === "en" ? "zh" : "en";
+        fetch("/api/liuyao", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, lang: otherLang }),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((r: LiuYaoResult | null) => {
+            if (r) langResultCache.current[otherLang] = r;
+          })
+          .catch(() => {});
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "An unexpected error occurred");
     } finally {
@@ -189,25 +237,23 @@ export default function Home() {
     }
   };
 
-  const handleGenerateReport = () => {
-    if (!birthData) return;
-    savePendingPurchase({ birthData, email: userEmail });
-    window.location.href = createGumroadCheckout(PRICING.baziBlueprint.permalink, "bazi");
-  };
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-col">
+      <LanguageSwitcher lang={lang} onToggle={handleLangToggle} />
+
       {/* Hero */}
-      <Hero />
+      <Hero lang={lang} />
 
       {/* Trigram Divider */}
       <div className="trigram-divider max-w-xs mx-auto pb-8">☰ ☷ ☵ ☲</div>
 
-      {/* Divination Section */}
+      {/* Liu Yao Section */}
       <section id="divination" className="py-16 px-6 max-w-5xl mx-auto scroll-mt-20">
         <div className="text-center mb-10">
           <p className="text-xs text-gold-400 uppercase tracking-[0.3em] mb-3">
-            {lang === "zh" ? "用易经开启你人生的第一卦" : "Cast Your First Hexagram with the I Ching"}
+            {lang === "zh" ? "六爻时间起卦" : "Liu Yao Time-Based Casting"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold mb-3">
             {lang === "zh" ? (
@@ -218,149 +264,31 @@ export default function Home() {
           </h2>
           <p className="text-gray-400 max-w-lg mx-auto text-sm">
             {lang === "zh"
-              ? "小事快速推算，大事深度占卜。让易经的智慧为你的衣食住行、工作姻缘指明方向。"
-              : "Quick divination for daily decisions, deep readings for life's big questions. Let the I Ching guide your journey."}
+              ? "基于你的出生时间自动起卦，结合性格分析，为你的婚姻、事业、财运、健康提供深度指引。"
+              : "Automatic hexagram casting based on your birth time, with personality analysis for deep guidance on marriage, career, wealth, and health."}
           </p>
         </div>
 
-        {/* Tabs — only 3 */}
-        <div className="flex justify-center gap-1 mb-6">
-          {([
-            { id: "liuyao", zh: "深度占卜", en: "Deep Divination", emoji: "☯️" },
-            { id: "liuren", zh: "快速推算", en: "Quick Divination", emoji: "🔮" },
-            { id: "vent", zh: "向大师倾诉", en: "Talk to Clara", emoji: "🍵" },
-          ] as const).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? "bg-gold-400/20 text-gold-300 border border-gold-400/30"
-                  : "bg-mystic-800/50 text-gray-400 hover:bg-mystic-700/50"
-              }`}
-            >
-              <span className="mr-1.5">{tab.emoji}</span>
-              {lang === "zh" ? tab.zh : tab.en}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab content */}
-        <div className="max-w-2xl mx-auto">
-          {activeTab === "liuyao" && <LiuYaoDivination />}
-          {activeTab === "liuren" && <XiaoLiuRen />}
-          {activeTab === "vent" && <VentChat />}
-        </div>
-
-        {/* Bottom hint */}
-        <div className="text-center mt-8">
-          <button
-            onClick={() => setShowReportSection(!showReportSection)}
-            className="text-sm text-gray-500 hover:text-gold-400 underline underline-offset-4 transition-colors"
-          >
-            {lang === "zh"
-              ? "想要更深入的了解自己？探索你的专属命理报告 →"
-              : "Want to dive deeper? Explore your exclusive destiny report →"}
-          </button>
-        </div>
-      </section>
-
-      {/* Report Purchase Section */}
-      {showReportSection && (
-        <section id="report-section" className="py-16 px-6 scroll-mt-20 bg-mystic-900/30">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10">
-              <p className="text-xs text-gold-400 uppercase tracking-[0.3em] mb-3">
-                {lang === "zh" ? "命理全息报告 + 十年预测" : "Ba Zi Full Report + 10-Year Forecast"}
-              </p>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-3">
-                {lang === "zh" ? (
-                  <>你的专属<span className="gold-text">生命蓝图</span></>
-                ) : (
-                  <>Your Exclusive <span className="gold-text">Life Blueprint</span></>
-                )}
-              </h2>
-              <p className="text-gray-400 max-w-lg mx-auto text-sm">
-                {lang === "zh"
-                  ? "基于你的生辰八字，AI 深度分析生成完整命理报告，包含衣食住行全方位建议及未来十年气运预测。付费后自动生成并发送到你的邮箱。"
-                  : "A complete Ba Zi report powered by AI, covering every aspect of your life and a 10-year yearly forecast. Delivered to your email after purchase."}
-              </p>
-            </div>
-
-            {/* Step 1: Input birth data */}
-            {!result && (
-              <div className="max-w-lg mx-auto">
-                <div className="mystic-card rounded-2xl p-6 sm:p-8">
-                  <p className="text-sm text-gray-300 text-center mb-6">
-                    {lang === "zh"
-                      ? "输入你的出生信息，先预览八字排盘，再决定是否购买完整报告。"
-                      : "Enter your birth data to preview your Ba Zi chart, then decide if you'd like the full report."}
-                  </p>
-                  <BaziForm onSubmit={handleSubmit} loading={loading} lang={lang} />
-                  {error && (
-                    <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
-                      {error}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Show preview + purchase CTA */}
-            {result && birthData && (
-              <div className="grid lg:grid-cols-2 gap-8 items-start">
-                {/* Left: Bazi chart preview */}
-                <div>
-                  <BaziPreview result={result} birthData={birthData} lang={lang} />
-                </div>
-
-                {/* Right: Report preview + purchase */}
-                <div className="space-y-6">
-                  <ReportPreview lang={lang} />
-
-                  <div className="mystic-card rounded-2xl p-6 text-center space-y-4 border border-gold-400/30">
-                    <p className="text-gray-200 font-medium text-lg">
-                      {lang === "zh"
-                        ? "解锁完整命理报告 + 十年预测"
-                        : "Unlock the Full Report + 10-Year Forecast"}
-                    </p>
-                    <p className="text-gray-400 text-sm max-w-md mx-auto">
-                      {lang === "zh"
-                        ? "包含体质分析、饮食指南、穿搭色彩、家居风水、出行建议、养生自护、水晶推荐、十年气运预测，以及个人专属箴言。PDF 格式发送至你的邮箱。"
-                        : "Includes constitution analysis, diet guide, color matching, home feng shui, travel advice, wellness tips, crystal recommendations, 10-year forecast, and your personal mantra. Delivered as PDF to your email."}
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-gold-300 text-lg font-bold">
-                      $9.99 <span className="text-gray-500 text-sm font-normal">
-                        {lang === "zh" ? "一次购买 · 永久查看" : "One-time · Lifetime access"}
-                      </span>
-                    </div>
-                    <input
-                      type="email"
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      placeholder={lang === "zh" ? "你的邮箱（接收报告）" : "Your email (to receive report)"}
-                      className="w-full px-4 py-3 rounded-xl bg-mystic-800/60 border border-mystic-700/60 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-gold-400/50 transition-colors"
-                    />
-                    <button
-                      onClick={handleGenerateReport}
-                      className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 shadow-lg"
-                    >
-                      {lang === "zh" ? "购买报告 →" : "Purchase Report →"}
-                    </button>
-                    <p className="text-xs text-gray-500">
-                      {lang === "zh"
-                        ? "支付成功后自动生成报告并发送至你的邮箱"
-                        : "Report is generated and sent to your email after payment"}
-                    </p>
-                  </div>
-                </div>
+        <div className="max-w-lg mx-auto">
+          <div className="mystic-card rounded-2xl p-6 sm:p-8">
+            <LiuYaoForm key={lang} lang={lang} onSubmit={handleSubmit} loading={loading} />
+            {error && (
+              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+                {error}
               </div>
             )}
           </div>
-        </section>
-      )}
+        </div>
 
-      {/* Clara Membership Benefits + App Download */}
+        {/* Result */}
+        {result && (
+          <div id="result-section" className="mt-12 max-w-2xl mx-auto scroll-mt-20">
+            <ResultDisplay result={result} lang={lang} />
+          </div>
+        )}
+      </section>
+
+      {/* Membership Section */}
       <section id="membership" className="py-16 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <p className="text-xs text-gold-400 uppercase tracking-[0.3em] mb-3">
@@ -393,8 +321,8 @@ export default function Home() {
               emoji: "🔮",
               zh: "无限占卜",
               en: "Unlimited Divination",
-              descZh: "小六壬、六爻占卜不限次数使用，深度解读为你提供全方位指引。",
-              descEn: "Unlimited Xiao Liu Ren and Liu Yao readings with in-depth interpretations for full guidance.",
+              descZh: "六爻占卜不限次数使用，深度解读为你提供全方位指引。",
+              descEn: "Unlimited Liu Yao readings with in-depth interpretations for full guidance.",
             },
             {
               emoji: "🍵",
@@ -463,7 +391,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <Footer />
+      <Footer lang={lang} />
     </div>
   );
 }

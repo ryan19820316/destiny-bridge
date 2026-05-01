@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getProfile } from "@/lib/profile";
+import { useState } from "react";
 
 type Lang = "zh" | "en";
 
@@ -40,15 +39,8 @@ const BAGUA_TRIGRAMS = [
   { char: "☷", angle: 315, label: "坤" },
 ];
 
-export default function Hero() {
-  const [lang, setLang] = useState<Lang>("en");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const p = getProfile();
-    setLang(p.languagePreference === "en" ? "en" : "zh");
-    setMounted(true);
-  }, []);
+export default function Hero({ lang }: { lang: Lang }) {
+  const [mounted] = useState(true);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">

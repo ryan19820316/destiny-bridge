@@ -9,6 +9,19 @@ import {
   PalaceElement,
 } from "./types";
 import { findHexagramByBinary } from "./hexagrams";
+import { solarToLunar, getShiChenIndex } from "@/lib/lunar";
+
+// Trigram index (0-7) to 3-bit binary (bottom to top within trigram)
+const TRIGRAM_BINARY: Record<number, string> = {
+  0: "000", // 坤
+  1: "111", // 乾
+  2: "110", // 兑
+  3: "101", // 离
+  4: "100", // 震
+  5: "011", // 巽
+  6: "010", // 坎
+  7: "001", // 艮
+};
 
 // Inlined from bazi.ts (not exported)
 const STEMS: Stem[] = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
@@ -165,6 +178,47 @@ export function tossCoins(): CoinTossLine[] {
     }
     lines.push({ position: pos, type, isYang, isMoving });
   }
+  return lines;
+}
+
+// ---- 时间起卦 ----
+export function timeBasedTossLines(date: Date): CoinTossLine[] {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hour = date.getHours();
+
+  const lunar = solarToLunar(year, month, day);
+  const shiChenIdx = getShiChenIndex(hour);
+  const shiChenNum = shiChenIdx + 1; // 子=1, 丑=2, ..., 亥=12
+
+  const upperIdx = (lunar.year + lunar.month + lunar.day) % 8;
+  const lowerIdx = (lunar.year + lunar.month + lunar.day + shiChenNum) % 8;
+  const movingLineRemainder = (lunar.year + lunar.month + lunar.day + shiChenNum) % 6;
+  const movingLinePos = movingLineRemainder === 0 ? 6 : movingLineRemainder;
+
+  const upperBits = TRIGRAM_BINARY[upperIdx];
+  const lowerBits = TRIGRAM_BINARY[lowerIdx];
+
+  if (!upperBits || !lowerBits) {
+    throw new Error(`Invalid trigram index: upper=${upperIdx} lower=${lowerIdx}`);
+  }
+
+  // Binary: lower trigram (lines 1-3) + upper trigram (lines 4-6)
+  // index 0 = line 1 (bottom), index 5 = line 6 (top)
+  const binary = lowerBits + upperBits;
+
+  const lines: CoinTossLine[] = [];
+  for (let pos = 1; pos <= 6; pos++) {
+    const bit = binary[pos - 1]; // pos 1 → index 0
+    const isYang = bit === "1";
+    const isMoving = pos === movingLinePos;
+    const type: CoinTossLine["type"] = isMoving
+      ? (isYang ? "oldYang" : "oldYin")
+      : (isYang ? "yang" : "yin");
+    lines.push({ position: pos, type, isYang, isMoving });
+  }
+
   return lines;
 }
 

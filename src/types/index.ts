@@ -229,6 +229,62 @@ export interface LiurenQueryRecord {
   timestamp: string;
 }
 
+// ---- Liu Yao Time-Based Divination ----
+export type CalcType = 1 | 2 | 3 | 4 | 5 | 6;
+
+export interface LiuYaoFormData {
+  gender: Gender;
+  birthYear: number;
+  birthMonth: number;
+  birthDay: number;
+  birthHour: number;
+  calcType: CalcType;
+  question?: string;
+  mode: "coin" | "time";
+  sysTime?: string;
+  birthplaceCity?: string;
+  lines?: { position: number; type: string; isYang: boolean; isMoving: boolean }[];
+}
+
+export interface LiuYaoResult {
+  hexagramName: string;
+  changedHexagramName: string;
+  palace: string;
+  palaceElement: string;
+  isJingGua: boolean;
+  movingLineCount: number;
+  monthBranch: string;
+  dayBranch: string;
+  lines: LiuYaoResultLine[];
+  yongShen: string;
+  yongShenStrength: string;
+  fortuneVerdict: string;
+  section1_hexagramSetup: string;
+  section2_yongShenAnalysis: string;
+  section3_hexagramProcess: string;
+  section4_conclusion: string;
+  section5_timing: string;
+  section6_risks: string;
+  selectedSubtype: string;
+  yinyaoArchetype: string;
+  yinyaoTraits: string[];
+  yinyaoAdvice: string;
+  oneLineSummary: string;
+  timestamp: string;
+}
+
+export interface LiuYaoResultLine {
+  position: number;
+  isYang: boolean;
+  isMoving: boolean;
+  branch: string;
+  branchElement: string;
+  liuqin: string;
+  liushen: string;
+  isShi: boolean;
+  isYing: boolean;
+}
+
 // ---- Legacy ----
 export interface AIReport {
   summary: string;
