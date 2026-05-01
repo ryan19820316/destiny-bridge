@@ -137,6 +137,10 @@ body {
   box-shadow: 0 0 30px rgba(212, 168, 83, 0.15), 0 0 60px rgba(212, 168, 83, 0.05);
 }
 
+.bagua-svg {
+  filter: drop-shadow(0 0 30px rgba(212, 168, 83, 0.12));
+}
+
 /* ===== Yin-Yang Pulse Ring ===== */
 .bagua-ring {
   position: absolute;

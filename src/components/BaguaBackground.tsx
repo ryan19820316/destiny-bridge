@@ -42,13 +42,13 @@ export default function BaguaBackground() {
     >
       <svg
         viewBox="0 0 600 600"
-        className="w-[min(85vh,85vw)] h-[min(85vh,85vw)] max-w-[560px] max-h-[560px]"
-        style={{ opacity: 0.06 }}
+        className="bagua-svg w-[min(90vh,90vw)] h-[min(90vh,90vw)] max-w-[600px] max-h-[600px]"
+        style={{ opacity: 0.18 }}
       >
         {/* Outer rings */}
-        <circle cx={cx} cy={cy} r={R + 12} fill="none" stroke="#d4a853" strokeWidth="0.5" />
-        <circle cx={cx} cy={cy} r={R + 6} fill="none" stroke="#d4a853" strokeWidth="0.3" />
-        <circle cx={cx} cy={cy} r={R - 6} fill="none" stroke="#d4a853" strokeWidth="0.5" />
+        <circle cx={cx} cy={cy} r={R + 12} fill="none" stroke="#d4a853" strokeWidth="1.2" />
+        <circle cx={cx} cy={cy} r={R + 6} fill="none" stroke="#d4a853" strokeWidth="0.6" />
+        <circle cx={cx} cy={cy} r={R - 6} fill="none" stroke="#d4a853" strokeWidth="1.2" />
 
         {/* Radial lines to trigrams */}
         {trigramPositions.map((p, i) => (
@@ -59,7 +59,7 @@ export default function BaguaBackground() {
             x2={p.x}
             y2={p.y}
             stroke="#d4a853"
-            strokeWidth="0.3"
+            strokeWidth="0.8"
           />
         ))}
 
@@ -74,7 +74,8 @@ export default function BaguaBackground() {
               textAnchor="middle"
               dominantBaseline="central"
               fill="#d4a853"
-              fontSize="28"
+              fontSize="32"
+              fontWeight="bold"
             >
               {t}
             </text>
@@ -82,15 +83,13 @@ export default function BaguaBackground() {
         })}
 
         {/* Tai Ji (Yin-Yang) center */}
-        <circle cx={cx} cy={cy} r={innerR} fill="none" stroke="#d4a853" strokeWidth="0.8" />
-        {/* Yin half (dark/left) — full circle as base */}
-        <circle cx={cx} cy={cy} r={innerR} fill="none" />
+        <circle cx={cx} cy={cy} r={innerR} fill="none" stroke="#d4a853" strokeWidth="1.5" />
         {/* Yang half (light/right) — S-curve */}
-        <path d={yinYangPath} fill="#d4a853" fillOpacity="0.5" />
-        {/* Yang dot in yin (bottom - dark area, light dot) */}
-        <circle cx={cx} cy={cy + innerR / 2} r={innerR / 6} fill="#d4a853" fillOpacity="0.7" />
-        {/* Yin dot in yang (top - light area, dark dot) */}
-        <circle cx={cx} cy={cy - innerR / 2} r={innerR / 6} fill="#0a0614" fillOpacity="0.5" />
+        <path d={yinYangPath} fill="#d4a853" fillOpacity="0.6" />
+        {/* Yang dot in yin (bottom) */}
+        <circle cx={cx} cy={cy + innerR / 2} r={innerR / 5} fill="#d4a853" fillOpacity="0.8" />
+        {/* Yin dot in yang (top) */}
+        <circle cx={cx} cy={cy - innerR / 2} r={innerR / 5} fill="#0a0614" fillOpacity="0.5" />
       </svg>
     </div>
   );
