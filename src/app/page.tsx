@@ -200,6 +200,9 @@ export default function Home() {
       {/* Hero */}
       <Hero />
 
+      {/* Trigram Divider */}
+      <div className="trigram-divider max-w-xs mx-auto pb-8">☰ ☷ ☵ ☲</div>
+
       {/* Divination Section */}
       <section id="divination" className="py-16 px-6 max-w-5xl mx-auto scroll-mt-20">
         <div className="text-center mb-10">

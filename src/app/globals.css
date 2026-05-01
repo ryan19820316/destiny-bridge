@@ -10,6 +10,8 @@
   --color-gold-300: #e8cc7a;
   --color-gold-200: #f0d78c;
   --color-gold-100: #f8ebc0;
+  --color-jade-400: #5b9a8b;
+  --color-jade-300: #7bc4a0;
 }
 
 body {
@@ -17,9 +19,64 @@ body {
   color: #e8e0f0;
 }
 
+/* ===== Bagua Background Pattern ===== */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image:
+    radial-gradient(circle at 20% 20%, #d4a853 1px, transparent 1px),
+    radial-gradient(circle at 80% 40%, #d4a853 1px, transparent 1px),
+    radial-gradient(circle at 50% 70%, #d4a853 1px, transparent 1px),
+    radial-gradient(circle at 70% 90%, #5b9a8b 1px, transparent 1px),
+    radial-gradient(circle at 10% 60%, #5b9a8b 1px, transparent 1px);
+  background-size: 120px 120px, 160px 160px, 140px 140px, 180px 180px, 130px 130px;
+}
+
+/* Subtle trigram watermark — only visible on wide screens */
+@media (min-width: 768px) {
+  body::after {
+    content: "☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷";
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    font-size: 2.5rem;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.03;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.5em;
+    color: #d4a853;
+  }
+}
+
+/* ===== Animations ===== */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes floatTrigram {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.04; }
+  50% { transform: translateY(-12px) rotate(3deg); opacity: 0.07; }
+}
+
+@keyframes baguaSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.08; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 .animate-fade-in {
@@ -36,28 +93,93 @@ body {
   opacity: 0;
 }
 
+/* ===== Bagua Floating Trigram Decorations ===== */
+.trigram-float {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  animation: floatTrigram 8s ease-in-out infinite;
+}
+.trigram-float:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; font-size: 4rem; }
+.trigram-float:nth-child(2) { top: 25%; right: 10%; animation-delay: 2s; font-size: 3.5rem; }
+.trigram-float:nth-child(3) { bottom: 20%; left: 12%; animation-delay: 4s; font-size: 3rem; }
+.trigram-float:nth-child(4) { bottom: 30%; right: 8%; animation-delay: 6s; font-size: 4.5rem; }
+.trigram-float:nth-child(5) { top: 50%; left: 5%; animation-delay: 3s; font-size: 2.5rem; }
+.trigram-float:nth-child(6) { top: 60%; right: 5%; animation-delay: 1s; font-size: 3rem; }
+
+/* ===== Gold Text Gradient ===== */
 .gold-text {
-  background: linear-gradient(135deg, #d4a853, #f8ebc0, #d4a853);
+  background: linear-gradient(135deg, #d4a853, #f8ebc0 40%, #d4a853 60%, #f8ebc0);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: shimmer 4s linear infinite;
 }
 
+/* ===== Mystic Card with Trigram Corner ===== */
 .mystic-card {
-  background: linear-gradient(135deg, rgba(26, 21, 48, 0.8), rgba(45, 37, 72, 0.6));
-  border: 1px solid rgba(212, 168, 83, 0.15);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(26, 21, 48, 0.85), rgba(45, 37, 72, 0.65));
+  border: 1px solid rgba(212, 168, 83, 0.12);
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+
+.mystic-card::before {
+  content: "☰";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 14px;
+  color: rgba(212, 168, 83, 0.1);
+  pointer-events: none;
 }
 
 .mystic-card:hover {
-  border-color: rgba(212, 168, 83, 0.35);
+  border-color: rgba(212, 168, 83, 0.3);
 }
 
+.mystic-card:hover::before {
+  color: rgba(212, 168, 83, 0.18);
+}
+
+/* ===== Section Divider with Trigram Motif ===== */
+.trigram-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: rgba(212, 168, 83, 0.25);
+  font-size: 1.25rem;
+  letter-spacing: 0.5em;
+}
+
+.trigram-divider::before,
+.trigram-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.2), transparent);
+}
+
+/* ===== Glow Effects ===== */
 .glow {
-  box-shadow: 0 0 40px rgba(212, 168, 83, 0.1), 0 0 80px rgba(212, 168, 83, 0.05);
+  box-shadow: 0 0 40px rgba(212, 168, 83, 0.08), 0 0 80px rgba(91, 154, 139, 0.04);
 }
 
-/* Chat bubbles */
+.glow-gold {
+  box-shadow: 0 0 30px rgba(212, 168, 83, 0.15), 0 0 60px rgba(212, 168, 83, 0.05);
+}
+
+/* ===== Yin-Yang Pulse Ring ===== */
+.bagua-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 168, 83, 0.08);
+  pointer-events: none;
+  animation: breathe 6s ease-in-out infinite;
+}
+
+/* ===== Chat bubbles ===== */
 .clara-bubble {
   background: var(--color-mystic-700);
   color: #e8e0f0;
@@ -70,6 +192,8 @@ body {
   border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
 }
 
+/* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--color-mystic-950); }
 ::-webkit-scrollbar-thumb { background: var(--color-mystic-600); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold-400); }
