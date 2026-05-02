@@ -249,6 +249,44 @@ export default function Home() {
       {/* Trigram Divider */}
       <div className="trigram-divider max-w-xs mx-auto pb-8">☰ ☷ ☵ ☲</div>
 
+      {/* Story Section — emotional hook */}
+      <section className="py-16 px-6 max-w-3xl mx-auto text-center">
+        <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
+          {lang === "zh"
+            ? "你是不是有些日子醒来就浑身不对劲。累、烦、做什么决定都觉得是错的？"
+            : "Do you have those days where you wake up feeling off? Tired, irritable, and every decision feels like the wrong one?"}
+        </p>
+        <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
+          {lang === "zh"
+            ? "东方智慧里有一个词：这不是倒霉，是气场乱了。"
+            : "Eastern wisdom has a word for this: it's not bad luck — your energy is misaligned."}
+        </p>
+        <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
+          {lang === "zh"
+            ? "《易经》三千年来一直在帮人度过这种时刻。"
+            : "The I Ching has guided people through moments exactly like this for three thousand years."}
+        </p>
+        <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4">
+          {lang === "zh"
+            ? "我们把它做成了 DestinyBridge——今天吃什么好、穿什么颜色能提气场、往哪个方向走更顺，一目了然。"
+            : "We turned it into DestinyBridge — what to eat today, what color lifts your energy, which direction to move. All clear, all personal."}
+        </p>
+        <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-8">
+          {lang === "zh"
+            ? "就像口袋里住了一个懂天机的智者。"
+            : "Like carrying a wise friend who understands the universe — right in your pocket."}
+        </p>
+        <a
+          href="#divination"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold-400 to-gold-300 text-mystic-950 font-semibold text-lg hover:from-gold-300 hover:to-gold-200 transition-all duration-300 glow-gold"
+        >
+          {lang === "zh" ? "开启你的第一次推演 →" : "Cast Your First Reading →"}
+        </a>
+      </section>
+
+      {/* Trigram Divider */}
+      <div className="trigram-divider max-w-xs mx-auto pb-8">☰ ☷ ☵ ☲</div>
+
       {/* Liu Yao Section */}
       <section id="divination" className="py-16 px-6 max-w-5xl mx-auto scroll-mt-20">
         <div className="text-center mb-10">
