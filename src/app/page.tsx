@@ -373,36 +373,48 @@ export default function Home() {
           </h3>
           <p className="text-gray-400 text-sm max-w-md mx-auto">
             {lang === "zh"
-              ? "随时随地获取你的专属生活指引。扫描二维码或在手机上打开链接，用 Expo Go 即刻体验。"
-              : "Access your personalized life guide anytime. Scan the QR code or open the link on your phone to try it instantly via Expo Go."}
+              ? "随时随地获取你的专属生活指引。每天穿衣、饮食、出行、养生，让东方智慧守护你的每一天。"
+              : "Your daily Eastern wellness guide — food, clothing, travel, and lifestyle wisdom in your pocket."}
           </p>
-          {/* QR Code for Expo Go */}
-          <div className="flex justify-center">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("exp://exp.host/@ryanshiyu/destiny-bridge")}`}
-              alt="Expo Go QR Code"
-              className="rounded-xl bg-white p-2 w-[180px] h-[180px]"
-            />
-          </div>
+
+          {/* Android APK direct download */}
           <a
-            href="exp://exp.host/@ryanshiyu/destiny-bridge"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-400 text-[#0a0a0a] font-semibold text-sm hover:bg-gold-300 transition-colors"
+            href="https://expo.dev/artifacts/eas/fftcgucwJkH5bCgQWEmo3e.apk"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gold-400 text-[#0a0a0a] font-bold text-base hover:bg-gold-300 transition-colors"
           >
-            Open in Expo Go
+            🤖 Download for Android
           </a>
-          <div className="flex justify-center gap-4 pt-2">
-            <button className="px-4 py-2 rounded-xl border border-gray-600 text-gray-500 text-xs cursor-not-allowed">
-              App Store — Soon
-            </button>
-            <button className="px-4 py-2 rounded-xl border border-gray-600 text-gray-500 text-xs cursor-not-allowed">
-              Google Play — Soon
-            </button>
-          </div>
           <p className="text-xs text-gray-500">
             {lang === "zh"
-              ? "无需审核即可体验 · App Store / Google Play 即将上线"
-              : "Try now via Expo Go · App Store & Google Play coming soon"}
+              ? "APK 直接下载 · 安装后即可使用"
+              : "APK direct download · Install and use instantly"}
           </p>
+
+          {/* QR Code for Expo Go — secondary option */}
+          <div className="pt-4 border-t border-mystic-700/50">
+            <p className="text-xs text-gray-500 mb-3">
+              {lang === "zh" ? "或用 Expo Go 打开：" : "Or open with Expo Go:"}
+            </p>
+            <div className="flex justify-center">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent("exp://exp.host/@ryanshiyu/destiny-bridge")}`}
+                alt="Expo Go QR Code"
+                className="rounded-xl bg-white p-2 w-[150px] h-[150px]"
+              />
+            </div>
+            <a
+              href="exp://exp.host/@ryanshiyu/destiny-bridge"
+              className="inline-block mt-2 text-gold-400/70 text-xs hover:text-gold-300 transition-colors"
+            >
+              exp://exp.host/@ryanshiyu/destiny-bridge
+            </a>
+          </div>
+
+          <div className="flex justify-center gap-4 pt-2">
+            <span className="px-4 py-2 rounded-xl border border-gray-600 text-gray-500 text-xs">
+              iOS — Coming Soon
+            </span>
+          </div>
         </div>
       </section>
 
