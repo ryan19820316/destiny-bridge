@@ -5,7 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { year, month, day, hour, gender, date } = body;
+    const year = body.year ?? body.birthYear;
+    const month = body.month ?? body.birthMonth;
+    const day = body.day ?? body.birthDay;
+    const hour = body.hour ?? body.birthHour;
+    const gender = body.gender;
+    const date = body.date;
 
     if (!year || !month || !day || hour === undefined || !gender) {
       return NextResponse.json(
