@@ -366,26 +366,42 @@ export default function Home() {
         </div>
 
         {/* App download CTA */}
-        <div className="mystic-card rounded-2xl p-8 text-center space-y-4 border border-gold-400/20">
+        <div id="download" className="mystic-card rounded-2xl p-8 text-center space-y-4 border border-gold-400/20 scroll-mt-20">
           <p className="text-3xl">📱</p>
           <h3 className="text-xl font-bold text-white">
-            {lang === "zh" ? "下载 Clara APP" : "Download Clara App"}
+            {lang === "zh" ? "下载 DestinyBridge APP" : "Download DestinyBridge App"}
           </h3>
           <p className="text-gray-400 text-sm max-w-md mx-auto">
             {lang === "zh"
-              ? "随时随地获取你的专属生活指引。支持 iOS 和 Android，会员功能全平台同步。"
-              : "Access your personalized life guide anytime, anywhere. Available on iOS and Android with full membership sync."}
+              ? "随时随地获取你的专属生活指引。扫描二维码或在手机上打开链接，用 Expo Go 即刻体验。"
+              : "Access your personalized life guide anytime. Scan the QR code or open the link on your phone to try it instantly via Expo Go."}
           </p>
+          {/* QR Code for Expo Go */}
+          <div className="flex justify-center">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("exp://exp.host/@destinybridge/destiny-bridge")}`}
+              alt="Expo Go QR Code"
+              className="rounded-xl bg-white p-2 w-[180px] h-[180px]"
+            />
+          </div>
+          <a
+            href="exp://exp.host/@destinybridge/destiny-bridge"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-400 text-[#0a0a0a] font-semibold text-sm hover:bg-gold-300 transition-colors"
+          >
+            Open in Expo Go
+          </a>
           <div className="flex justify-center gap-4 pt-2">
-            <button className="px-6 py-3 rounded-xl bg-white text-black font-medium text-sm hover:bg-gray-200 transition-colors">
-              App Store
+            <button className="px-4 py-2 rounded-xl border border-gray-600 text-gray-500 text-xs cursor-not-allowed">
+              App Store — Soon
             </button>
-            <button className="px-6 py-3 rounded-xl bg-white text-black font-medium text-sm hover:bg-gray-200 transition-colors">
-              Google Play
+            <button className="px-4 py-2 rounded-xl border border-gray-600 text-gray-500 text-xs cursor-not-allowed">
+              Google Play — Soon
             </button>
           </div>
-          <p className="text-xs text-gray-600">
-            {lang === "zh" ? "即将上线 · 敬请期待" : "Coming Soon · Stay Tuned"}
+          <p className="text-xs text-gray-500">
+            {lang === "zh"
+              ? "无需审核即可体验 · App Store / Google Play 即将上线"
+              : "Try now via Expo Go · App Store & Google Play coming soon"}
           </p>
         </div>
       </section>

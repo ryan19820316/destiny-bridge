@@ -5,6 +5,7 @@ const T = {
   privacy: { zh: "隐私政策", en: "Privacy" },
   terms: { zh: "服务条款", en: "Terms" },
   contact: { zh: "联系我们", en: "Contact" },
+  feedback: { zh: "反馈建议", en: "Feedback" },
   disclaimer: { zh: "养生指引，非医疗建议。", en: "Wellness guidance, not medical advice." },
 };
 
@@ -26,6 +27,9 @@ export default function Footer({ lang }: { lang: Lang }) {
           </a>
           <a href="#" className="hover:text-gold-300 transition-colors">
             {T.contact[lang]}
+          </a>
+          <a href="/feedback" className="hover:text-gold-300 transition-colors">
+            {T.feedback[lang]}
           </a>
         </div>
         <p className="text-xs text-gray-600">

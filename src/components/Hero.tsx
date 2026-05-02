@@ -130,6 +130,12 @@ export default function Hero({ lang }: { lang: Lang }) {
           >
             {T.cta[lang]}
           </a>
+          <a
+            href="#download"
+            className="block mt-3 text-gold-400/70 text-sm hover:text-gold-300 transition-colors"
+          >
+            📱 {lang === "zh" ? "手机用户？下载 App →" : "Prefer mobile? Get the App →"}
+          </a>
         </div>
 
         {/* Trust message */}
