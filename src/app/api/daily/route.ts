@@ -46,6 +46,11 @@ export async function POST(req: NextRequest) {
       error = "AI service not configured (no API key)";
     }
 
+    if (dailyGuidance) {
+      dailyGuidance.date = targetDate;
+      dailyGuidance.lunarDate = targetDate;
+    }
+
     return NextResponse.json({
       date: targetDate,
       baziSummary: {
