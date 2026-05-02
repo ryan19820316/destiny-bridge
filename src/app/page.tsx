@@ -379,13 +379,13 @@ export default function Home() {
           {/* QR Code for Expo Go */}
           <div className="flex justify-center">
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("exp://exp.host/@destinybridge/destiny-bridge")}`}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("exp://exp.host/@ryanshiyu/destiny-bridge")}`}
               alt="Expo Go QR Code"
               className="rounded-xl bg-white p-2 w-[180px] h-[180px]"
             />
           </div>
           <a
-            href="exp://exp.host/@destinybridge/destiny-bridge"
+            href="exp://exp.host/@ryanshiyu/destiny-bridge"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold-400 text-[#0a0a0a] font-semibold text-sm hover:bg-gold-300 transition-colors"
           >
             Open in Expo Go
