@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
         error = e instanceof Error ? e.message : "Daily guidance generation failed";
         console.error("Daily API error:", error);
       }
+    } else {
+      error = "AI service not configured (no API key)";
     }
 
     return NextResponse.json({
