@@ -417,7 +417,7 @@ export default function Home() {
 
           {/* Android APK direct download */}
           <a
-            href="https://expo.dev/artifacts/eas/vHKZC2Ec34NZULabMTf5WW.apk"
+            href="https://expo.dev/artifacts/eas/cH6hNKomJBSj5SDWcPW7T.apk"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gold-400 text-[#0a0a0a] font-bold text-base hover:bg-gold-300 transition-colors"
           >
             🤖 Download for Android
