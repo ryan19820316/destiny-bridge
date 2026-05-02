@@ -87,21 +87,20 @@ Return ONLY a valid JSON object. NO markdown code blocks, NO wrapping text. Star
 
 const DAILY_SYSTEM_PROMPT = `You are Clara, a warm Eastern wellness consultant. Give today's practical guidance based on the user's Ba Zi chart.
 
-## Bilingual Output (CRITICAL)
-EVERY text field MUST have BOTH Chinese and English versions.
+## Output Language
+ALL text fields must be in {LANG} only. Do NOT include Chinese text unless lang=zh. Do NOT include English text unless lang=en.
 
 Respond with a JSON object. NO markdown, ONLY raw JSON:
 
 {
   "energyIndex": <number 1-10>,
-  "energySummary": "<one warm sentence about today's energy, in Chinese>",
-  "energySummaryEn": "<same in English>",
-  "food": {"ingredient": "<one hero ingredient, bilingual>", "tip": "<one cooking tip, bilingual>", "simpleRecipe": "<name of a 5-minute recipe, bilingual>"},
-  "clothing": {"powerColor": "<today's best color, bilingual>", "avoidColor": "<color to skip, bilingual>", "styleTip": "<one styling suggestion, bilingual>"},
-  "home": {"quickTask": "<one 5-minute home task, bilingual>", "crystalTip": "<which crystal where, bilingual>"},
-  "travel": {"direction": "<favorable direction, bilingual>", "bestTime": "<best 2-hour window, bilingual>", "avoid": "<what to postpone, bilingual>"},
-  "body": {"focus": "<which body part/meridian, bilingual>", "twoMinuteRitual": "<a specific 2-minute self-care action, bilingual>"},
-  "mantra": "<one-line affirmation, bilingual>"
+  "energySummary": "<one warm sentence about today's energy>",
+  "food": {"ingredient": "<one hero ingredient>", "tip": "<one cooking tip>", "simpleRecipe": "<name of a 5-minute recipe>"},
+  "clothing": {"powerColor": "<today's best color>", "avoidColor": "<color to skip>", "styleTip": "<one styling suggestion>"},
+  "home": {"quickTask": "<one 5-minute home task>", "crystalTip": "<which crystal where>"},
+  "travel": {"direction": "<favorable direction>", "bestTime": "<best 2-hour window>", "avoid": "<what to postpone>"},
+  "body": {"focus": "<which body part/meridian>", "twoMinuteRitual": "<a specific 2-minute self-care action>"},
+  "mantra": "<one-line affirmation>"
 }`;
 
 const VENT_SYSTEM_PROMPT = `You are Clara, a warm Eastern wellness companion. A busy homemaker is venting her frustrations to you. Your job is to listen, validate, and gently reframe her experience through the lens of Five Elements (五行), Yin-Yang (阴阳), and I Ching (易经) wisdom.
@@ -183,18 +182,22 @@ Return ONLY the JSON object as specified.`;
 
 export async function generateDailyGuidance(
   chartData: string,
-  date: string
+  date: string,
+  lang: "en" | "zh" = "en"
 ): Promise<import("@/types").DailyGuidance> {
   if (!getDoubaoKey()) throw new Error("DOUBAO_API_KEY is not configured");
+
+  const langLabel = lang === "zh" ? "Chinese" : "English";
+  const systemPrompt = DAILY_SYSTEM_PROMPT.replace("{LANG}", langLabel);
 
   const userMessage = `${chartData}
 
 Today's date: ${date}
 
 Generate today's daily wellness guidance for this person based on their Ba Zi chart and today's cosmic energy.
-Output EVERY text field in BOTH Chinese and English. Return ONLY the JSON object.`;
+Output EVERY text field in ${langLabel} only. Return ONLY the JSON object.`;
 
-  const content = await callDoubao(DAILY_SYSTEM_PROMPT, userMessage, {
+  const content = await callDoubao(systemPrompt, userMessage, {
     temperature: 0.7,
     max_tokens: 1500,
   });

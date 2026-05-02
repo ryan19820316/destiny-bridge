@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     if (process.env.DOUBAO_API_KEY || process.env.ANTHROPIC_API_KEY) {
       try {
-        dailyGuidance = await generateDailyGuidance(chartText, targetDate);
+        dailyGuidance = await generateDailyGuidance(chartText, targetDate, body.lang || "en");
       } catch (e) {
         error = e instanceof Error ? e.message : "Daily guidance generation failed";
         console.error("Daily API error:", error);
