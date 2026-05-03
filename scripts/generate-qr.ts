@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 import { writeFileSync, readFileSync } from "fs";
 
-const url = "https://destinybridge.app";
+const url = "https://destiny-bridge-production.up.railway.app";
 
 async function main() {
   const svg = await QRCode.toString(url, {
