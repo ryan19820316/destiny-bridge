@@ -1,5 +1,6 @@
 import { calculateBazi, formatChartForAI } from "@/lib/bazi";
 import { generateDailyGuidance } from "@/lib/ai";
+import { logUsage } from "@/lib/analytics";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -11,6 +12,13 @@ export async function POST(req: NextRequest) {
     const hour = body.hour ?? body.birthHour;
     const gender = body.gender;
     const date = body.date;
+
+    logUsage({
+      endpoint: "daily",
+      lang: body.lang || "en",
+      timestamp: new Date().toISOString(),
+      ip: req.headers.get("x-forwarded-for") || "",
+    });
 
     if (!year || !month || !day || hour === undefined || !gender) {
       return NextResponse.json(

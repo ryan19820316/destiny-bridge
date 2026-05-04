@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { callDoubao, safeJsonParse, getDoubaoKey } from "@/lib/doubao";
 import { calculateXiaoLiuRen, PALACE_DATA } from "@/lib/liuren";
 import { saveLiurenQuery, canQueryLiuren } from "@/lib/profile";
+import { logUsage } from "@/lib/analytics";
 import type { QuestionCategory } from "@/types";
 
 // Lightweight prompt — AI only interprets, no math
@@ -60,6 +61,14 @@ export async function POST(req: NextRequest) {
 
     const validCategories: QuestionCategory[] = ["love", "family", "health", "career", "daily"];
     const cat: QuestionCategory = validCategories.includes(category) ? category : "daily";
+
+    logUsage({
+      endpoint: "liuren",
+      category: cat,
+      lang: question ? undefined : "en",
+      timestamp: new Date().toISOString(),
+      ip: req.headers.get("x-forwarded-for") || "",
+    });
 
     if (!question || !solarDate || !timeHHMM) {
       return NextResponse.json(

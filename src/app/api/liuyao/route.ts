@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callDoubao, safeJsonParse, getDoubaoKey } from "@/lib/doubao";
+import { logUsage } from "@/lib/analytics";
 import type { CalcType } from "@/types";
 import type { CoinTossLine } from "@/lib/liuyao/types";
 import { timeBasedTossLines, buildDivination, getFullMonthBranch, getFullDayBranch } from "@/lib/liuyao/engine";
@@ -172,6 +173,14 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const outputLang: "zh" | "en" = lang === "en" ? "en" : "zh";
+
+    logUsage({
+      endpoint: "liuyao",
+      category: calcType ? CALC_TYPE_LABELS_EN[calcType] || String(calcType) : undefined,
+      lang: outputLang,
+      timestamp: new Date().toISOString(),
+      ip: req.headers.get("x-forwarded-for") || "",
+    });
 
     if (!gender || !birthYear || !birthMonth || !birthDay || birthHour === undefined || !calcType) {
       return NextResponse.json(

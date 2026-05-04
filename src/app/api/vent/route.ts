@@ -1,12 +1,19 @@
 import { calculateBazi, formatChartForAI } from "@/lib/bazi";
 import { generateVentResponse } from "@/lib/ai";
 import { buildProfileSummary } from "@/lib/profile";
+import { logUsage } from "@/lib/analytics";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { message, profile } = body;
+
+    logUsage({
+      endpoint: "vent",
+      timestamp: new Date().toISOString(),
+      ip: req.headers.get("x-forwarded-for") || "",
+    });
 
     if (!message || !profile) {
       return NextResponse.json(
