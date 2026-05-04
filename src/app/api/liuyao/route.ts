@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
 
     logUsage({
       endpoint: "liuyao",
-      category: calcType ? CALC_TYPE_LABELS_EN[calcType] || String(calcType) : undefined,
+      category: calcType ? CALC_TYPE_LABELS_EN[calcType as CalcType] || String(calcType) : undefined,
       lang: outputLang,
       timestamp: new Date().toISOString(),
       ip: req.headers.get("x-forwarded-for") || "",
